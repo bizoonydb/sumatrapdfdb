@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Gerador de Estrutura de Pastas com PDF Viewer</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    :root {
+        --bg-color: #1e1e1e;       /* fundo escuro */
+        --sidebar-bg: #2c2c2c;     /* fundo sidebar */
+        --text-color: #f5f5f5;     /* texto claro */
+        --highlight-color: #ffc107; /* amarelo */
+        --preview-bg: #252525;     /* fundo preview */
+        --tab-bg: #333;            /* fundo tabs */
+        --tab-active-bg: #1e1e1e;  /* tab ativa */
+        --tab-border: #ffc107;     /* borda/linha da tab */
+        --textarea-bg: #2c2c2c;    /* fundo textarea */
+        --textarea-text: #f5f5f5;  /* texto textarea */
+        --button-bg: #ffc107;      /* botão amarelo */
+        --button-text: #1e1e1e;    /* texto botão escuro */
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        background: var(--bg-color);
+        color: var(--text-color);
+    }
+
+    .sidebar {
+        width: 300px;
+        background: var(--sidebar-bg);
+        padding: 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+        border-right: 1px solid var(--highlight-color);
+    }
+
+    .sidebar input[type="text"] {
+        width: 100%;
+        padding: 5px;
+        margin: 5px 0 10px 0;
+        box-sizing: border-box;
+        background: #3a3a3a;
+        border: 1px solid var(--highlight-color);
+        color: var(--text-color);
+    }
+
+    .sidebar button {
+        width: 100%;
+        padding: 5px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        background: var(--button-bg);
+        color: var(--button-text);
+        border: none;
+        font-weight: bold;
+    }
+
+    .right {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .top-right {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+    }
+
+    #preview {
+        width: 20%;
+        overflow-y: auto;
+        border-right: 1px solid var(--highlight-color);
+        padding: 10px;
+        background: var(--preview-bg);
+    }
+
+    #preview details summary {
+        color: #fd0000;
+        cursor: pointer;
+           font-size: 20px;
+    }
+
+    #preview a {
+        display: block;
+        margin-left: 35px;
+        text-decoration: none;
+        font-size: 20px;
+        color: #00fd0d;
+        cursor: pointer;
+    }
+
+    #preview a i {
+        margin-right: 5px;
+        color: var(--highlight-color);
+    }
+
+    #tabs-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: var(--bg-color);
+    }
+
+    #tabs {
+        display: flex;
+        background: var(--tab-bg);
+        padding: 5px;
+        overflow-x: auto;
+        border-bottom: 1px solid var(--tab-border);
+    }
+
+    #tabs .tab {
+        padding: 5px 10px;
+        margin-right: 5px;
+        background: #444;
+        border-radius: 3px 3px 0 0;
+        cursor: pointer;
+        position: relative;
+        color: var(--text-color);
+    }
+
+    #tabs .tab.active {
+        background: #fdcf00;
+        color: #2c2c2c;
+        border-bottom: 1px solid var(--bg-color);
+    }
+
+    #tabs .tab .close {
+        position: absolute;
+        top: 0;
+        right: 2px;
+        font-weight: bold;
+        cursor: pointer;
+        color: var(--highlight-color);
+    }
+
+    #pdf-viewer {
+        flex: 1;
+        width: 100%;
+        border: none;
+        background: var(--bg-color);
+    }
+
+    #generatedCodeContainer {
+        height: 200px;
+        border-top: 1px solid var(--highlight-color);
+        padding: 10px;
+        box-sizing: border-box;
+        background: #222;
+    }
+
+    textarea {
+        width: 100%;
+        height: 70%;
+        font-family: monospace;
+        font-size: 14px;
+        margin-bottom: 5px;
+        box-sizing: border-box;
+        background: #000000;
+        color: #00fd0d;
+        border: 1px solid var(--highlight-color);
+        resize: none;
+    }
+
+    #generatedCodeContainer button {
+        padding: 5px 10px;
+        margin-right: 10px;
+        cursor: pointer;
+        background: var(--button-bg);
+        color: var(--button-text);
+        border: none;
+        font-weight: bold;
+    }
+
+    /* Scrollbars */
+    .sidebar::-webkit-scrollbar,
+    #preview::-webkit-scrollbar,
+    #tabs-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb,
+    #preview::-webkit-scrollbar-thumb,
+    #tabs-container::-webkit-scrollbar-thumb {
+        background: var(--highlight-color);
+        border-radius: 4px;
+    }
+</style>
+
+
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>Gerador de Estrutura</h2>
+    <input type="text" id="baseURL" placeholder="URL base (ex: https://bizoonydb.github.io/db/)">
+
+    <h3>Adicionar Pasta</h3>
+    <input type="text" id="folderName" placeholder="Nome da pasta">
+    <button onclick="addFolder()">Adicionar Pasta</button>
+
+    <h3>Adicionar Arquivo</h3>
+    <input type="text" id="fileName" placeholder="Nome do arquivo (ex: ARQUIVO.PDF)">
+    <input type="text" id="fileDisplayName" placeholder="Nome que aparece no link">
+    <button onclick="addFile()">Adicionar Arquivo</button>
+</div>
+
+<div class="right">
+    <div class="top-right">
+        <div id="preview"></div>
+        <div id="tabs-container">
+    <div id="tabs"></div>
+    <div id="pdf-viewer-container" style="flex: 1; position: relative;"></div>
+</div>
+
+    </div>
+
+    <div id="generatedCodeContainer">
+        <textarea id="generatedCode" readonly></textarea>
+        <div>
+            <button onclick="copyCode()">Copiar Código</button>
+            <button onclick="clearAll()">Limpar Tudo</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let structure = JSON.parse(localStorage.getItem('structure')) || [];
+    let currentFolder = structure.length ? structure[structure.length - 1] : null;
+
+    const savedBaseURL = localStorage.getItem('baseURL');
+    if(savedBaseURL) document.getElementById('baseURL').value = savedBaseURL;
+
+    function updateCode() {
+        const baseURL = document.getElementById('baseURL').value.trim();
+        localStorage.setItem('structure', JSON.stringify(structure));
+        localStorage.setItem('baseURL', baseURL);
+
+        // Gerar código HTML
+        let html = '';
+        structure.forEach(folder => {
+            html += `<details class="folder">\n`;
+            html += `  <summary><i class="fa-regular fa-folder icon-outline"></i> ${folder.name}</summary>\n`;
+            folder.files.forEach(file => {
+                html += `  <a href="#" data-url="${baseURL}${file.fileName}" class="file"><i class="far fa-file-pdf"></i> ${file.displayName}</a>\n`;
+            });
+            html += `</details>\n\n`;
+        });
+        document.getElementById('generatedCode').value = html;
+
+        renderPreview();
+    }
+
+    function renderPreview() {
+        const preview = document.getElementById('preview');
+        preview.innerHTML = '';
+        const baseURL = document.getElementById('baseURL').value.trim();
+
+        structure.forEach(folder => {
+            const details = document.createElement('details');
+            details.className = 'folder';
+            const summary = document.createElement('summary');
+            summary.innerHTML = `<i class="fa-regular fa-folder icon-outline"></i> ${folder.name}`;
+            details.appendChild(summary);
+
+            folder.files.forEach(file => {
+                const a = document.createElement('a');
+                a.innerHTML = `<i class="far fa-file-pdf"></i> ${file.displayName}`;
+                a.href = "#";
+                a.addEventListener('click', () => openPDF(file.fileName));
+                details.appendChild(a);
+            });
+
+            preview.appendChild(details);
+        });
+    }
+
+    function addFolder() {
+        const folderName = document.getElementById('folderName').value.trim();
+        if(!folderName) return alert("Digite o nome da pasta!");
+        const folder = {name: folderName, files: []};
+        structure.push(folder);
+        currentFolder = folder;
+        updateCode();
+    }
+
+    function addFile() {
+        const fileName = document.getElementById('fileName').value.trim();
+        const displayName = document.getElementById('fileDisplayName').value.trim();
+        const baseURL = document.getElementById('baseURL').value.trim();
+        if(!fileName || !displayName || !baseURL) return alert("Preencha todos os campos!");
+        if(!currentFolder) return alert("Adicione ou selecione uma pasta primeiro!");
+
+        currentFolder.files.push({fileName, displayName});
+        document.getElementById('fileName').value = '';
+        document.getElementById('fileDisplayName').value = '';
+        updateCode();
+    }
+
+    // Tabs PDF
+   let tabs = [];
+
+function openPDF(fileName) {
+    const baseURL = document.getElementById('baseURL').value.trim();
+    const url = `https://bizoonydb.github.io/PDFJS/web/viewer.html?file=${encodeURIComponent(baseURL + fileName)}`;
+
+    let tab = tabs.find(t => t.url === url);
+    if (!tab) {
+        // Criar iframe separado
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        iframe.style.display = 'none'; // inicialmente escondido
+        document.getElementById('pdf-viewer-container').appendChild(iframe);
+
+        tab = { url, title: fileName, iframe, active: false };
+        tabs.push(tab);
+    }
+    setActiveTab(tab);
+    renderTabs();
+}
+
+function setActiveTab(tab) {
+    // Esconder todos os iframes
+    tabs.forEach(t => t.iframe.style.display = 'none');
+
+    // Mostrar o iframe da aba ativa
+    tab.iframe.style.display = 'block';
+
+    // Marcar aba ativa
+    tabs.forEach(t => t.active = false);
+    tab.active = true;
+}
+
+function renderTabs() {
+    const tabsDiv = document.getElementById('tabs');
+    tabsDiv.innerHTML = '';
+    tabs.forEach(tab => {
+        const tabEl = document.createElement('div');
+        tabEl.className = 'tab' + (tab.active ? ' active' : '');
+        tabEl.innerHTML = `${tab.title} <span class="close">&times;</span>`;
+        tabEl.addEventListener('click', () => setActiveTab(tab));
+        tabEl.querySelector('.close').addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeTab(tab);
+        });
+        tabsDiv.appendChild(tabEl);
+    });
+}
+
+function closeTab(tab) {
+    const index = tabs.indexOf(tab);
+    if (index > -1) {
+        tab.iframe.remove(); // Remove iframe
+        tabs.splice(index, 1);
+    }
+
+    if (tab.active && tabs.length) setActiveTab(tabs[0]);
+    renderTabs();
+}
+
+
+    function copyCode() {
+        const code = document.getElementById('generatedCode');
+        code.select();
+        code.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        alert("Código copiado para a área de transferência!");
+    }
+
+    function clearAll() {
+    if (confirm("Tem certeza que deseja limpar toda a estrutura e o código gerado?")) {
+        // Zera variáveis
+        structure = [];
+        currentFolder = null;
+
+        // Remove do localStorage
+        localStorage.removeItem('structure');
+
+        // Limpa o campo de código gerado
+        document.getElementById('generatedCode').value = '';
+
+        // Atualiza a visualização
+        renderPreview();
+
+        alert("Código e estrutura limpos com sucesso!");
+    }
+}
+
+
+    updateCode();
+</script>
+
+</body>
+</html>

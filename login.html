@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+
+        .login-container img {
+            width: 80px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .remember-me {
+            width: 90%;
+            margin: 10px auto;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .remember-me input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #4facfe;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <img src="./assets/logo.png" alt="Logo">
+        <h2>Login</h2>
+        <input type="text" id="email" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+
+        <!-- Aligned and styled remember me -->
+        <div class="remember-me">
+            <input type="checkbox" id="rememberMe">
+            <label for="rememberMe">Remember me</label>
+        </div>
+
+        <button onclick="login()">Login</button>
+        <p class="error" id="error-msg"></p>
+    </div>
+
+    <script>
+        // function login() {
+        //     const email = document.getElementById('email').value;
+        //     const password = document.getElementById('password').value;
+        //     window.electron.sendLogin({ email, password });
+
+        //     window.electron.onLoginFailed((message) => {
+        //         document.getElementById('error-msg').textContent = message;
+        //     });
+        // }
+    </script>
+
+    <script>
+        // On page load, try to populate saved credentials
+        window.onload = function () {
+            const savedEmail = localStorage.getItem('savedEmail');
+            const savedPassword = localStorage.getItem('savedPassword');
+            const remember = localStorage.getItem('rememberMe');
+
+            if (remember === 'true') {
+                document.getElementById('email').value = savedEmail || '';
+                document.getElementById('password').value = savedPassword || '';
+                document.getElementById('rememberMe').checked = true;
+            }
+        }
+
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('rememberMe').checked;
+
+            if (!email || !password) {
+                document.getElementById('error-msg').textContent = 'Please fill in all fields';
+                return;
+            }
+
+            if (remember) {
+                localStorage.setItem('savedEmail', email);
+                localStorage.setItem('savedPassword', password);
+                localStorage.setItem('rememberMe', 'true');
+            } else {
+                localStorage.removeItem('savedEmail');
+                localStorage.removeItem('savedPassword');
+                localStorage.removeItem('rememberMe');
+            }
+
+            // Simulate login or trigger backend communication
+            window.electron.sendLogin({ email, password });
+
+            window.electron.onLoginFailed((message) => {
+                document.getElementById('error-msg').textContent = message;
+            });
+        }
+    </script>
+</body>
+
+</html>

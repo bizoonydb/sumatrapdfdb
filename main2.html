@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Skill By PM (Made In India)</title>
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        .searchPanel {
+
+            width: 150px;
+        }
+
+        .sidebar {
+            width: 20%;
+            background: #f4f4f4;
+            padding: 5px;
+            overflow-y: auto;
+            border-right: 2px solid #ddd;
+            flex-shrink: 0;
+
+
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar li {
+            padding: 5px 0;
+            cursor: pointer;
+            /* transition: background 0.3s; */
+        }
+
+
+
+        .pdf-viewer {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #tabHeaders {
+            display: flex;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            border-bottom: 2px solid #ccc;
+            padding: 10px;
+            max-width: 70%;
+            margin-right: 30px;
+            height: 50px;
+            /* scrollbar-width: thin; */
+        }
+
+        #tabHeaders::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        #tabHeaders::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .tabs-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f5f5f5;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            height: 50px;
+        }
+
+        .tab {
+            padding: 10px 10px;
+            margin-right: 5px;
+            background: #ecf0f1;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .tab.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .close-btn {
+            margin-left: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* #pdf-ui {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+        } */
+
+        #pdf-ui {
+            overflow-y: auto;
+            flex-grow: 1;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            padding: 20px;
+        }
+
+
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #categoryList {
+            margin-top: 20px;
+        }
+
+        /* Tree styling */
+        .tree {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+
+        .tree li {
+            margin: 5px 0;
+        }
+
+        #sidebar ul {
+            margin: 0;
+            padding-left: 20px;
+            list-style: none;
+            line-height: 1em;
+        }
+
+        #sidebar ul li {
+            position: relative;
+        }
+
+        #sidebar ul li::before,
+        #sidebar ul li::after {
+            content: "";
+            position: absolute;
+            left: -15px;
+            border-left: 2px dashed #999;
+        }
+
+        #sidebar ul li::before {
+            top: 0;
+            width: 15px;
+            height: 1em;
+            border-bottom: 2px dashed #999;
+        }
+
+        #sidebar ul.tree>li:first-child::before {
+            border-left: none;
+        }
+
+        #sidebar ul li::after {
+            top: 1.1em;
+            bottom: 1px;
+        }
+
+        #sidebar ul li:last-child::after {
+            display: none;
+        }
+
+        .bxs-file-pdf {
+            color: gray;
+            /* PDF icon color */
+            margin-right: 5px;
+        }
+
+
+        #pdfContainers {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            /* Full screen height */
+            border: 1px solid #ddd;
+            overflow: hidden;
+            display: flex;
+            /* Optional: only if you want to center content */
+
+        }
+
+
+
+        /* #pdfContainers {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ddd;
+            overflow: hidden;
+            
+        } */
+
+        #pdfContainers img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            /* Ensures the image scales nicely */
+        }
+
+        .pdf-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            /* Hide by default */
+        }
+
+        .pdf-container.active {
+            display: block;
+            /* Show only the active PDF */
+        }
+
+        .results {
+            display: none !important;
+        }
+
+        .sidebar.collapsed {
+            width: 0px;
+            /* Width when collapsed */
+        }
+
+        .pdf-viewer .toggle-btn {
+            position: relative;
+            top: 10px;
+            right: -25px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            padding: 10px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .pdf-viewer .toggle-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* Beautiful Search Box */
+        .search-box {
+            width: 80%;
+            margin: 20px auto;
+            padding: 10px;
+            border-radius: 25px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .search-box input {
+            border: none;
+            outline: none;
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .search-box button {
+            background: #3498db;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .search-box button:hover {
+            background: #2980b9;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #f4f4f4;
+
+        }
+
+        .toggle-btn,
+        .logout-btn {
+            width: 100px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            border-radius: 5px;
+        }
+
+        /* Keep their individual styles */
+        .toggle-btn {
+            background: none;
+            border: 1px solid white;
+            color: white;
+            margin-right: 30px;
+            /* Adds spacing between buttons */
+        }
+
+        .logout-btn {
+            background: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-left: 10px;
+            margin-top: 10px;
+        }
+
+
+
+        .logout-btn:hover {
+            background: darkred;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-100%);
+        }
+    </style>
+</head>
+
+<body>
+
+
+
+
+    <div class="sidebar" id="sidebar">
+        <img src="./assets/logo.png" alt="Logo" style="width: 30%; margin-left: 20px;">
+
+        <div class="search-box">
+            <input type="text" placeholder="Search..." id="searchInputcategory">
+        </div>
+
+        <div id="loadingSpinner" class="loading-spinner"></div>
+        <ul class="tree" id="categoryList"></ul>
+    </div>
+
+    <div class="pdf-viewer">
+        <div class="tabs-row">
+            <div id="tabHeaders">
+
+            </div>
+            <div class="toolbar">
+                <button class="toggle-btn" id="toggleSidebarBtn" style="font-size: 20px;">☰</button>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
+            </div>
+
+        </div>
+
+
+
+
+        <div id="pdfContainers">
+            <img src="./assets/ski.jpeg" alt="Logo">
+        </div>
+
+
+
+
+
+
+
+    </div>
+
+
+
+
+
+
+
+
+</body>
+
+<script>
+    $(document).ready(function () {
+
+
+
+        $("#searchInputcategory").on("keyup", function () {
+            filter = $(this).val().toLowerCase().trim();
+
+            if (filter === "") {
+                $("#categoryList li").each(function () {
+                    $(this).show();
+                    const $ul = $(this).children("ul");
+                    if ($ul.length > 0) {
+                        $ul.hide();
+                        $(this).children("span").first().text("▶");
+                    }
+                });
+                return;
+            }
+
+            $("#categoryList > li").each(function () {
+                searchAndFilter($(this));
+            });
+        });
+
+
+
+
+
+
+
+
+
+
+        function searchAndFilter($listItem) {
+            const spans = $listItem.children("span");
+            let labelText = "";
+
+            if (spans.length === 2) {
+                labelText = spans.eq(1).text().toLowerCase(); // toggle + label
+            } else if (spans.length === 1) {
+                labelText = spans.eq(0).text().toLowerCase(); // label only
+            }
+
+            const $childrenUl = $listItem.children("ul");
+            let hasMatch = labelText.includes(filter);
+            let childMatched = false;
+
+            if ($childrenUl.length > 0) {
+                $childrenUl.children("li").each(function () {
+                    const $child = $(this);
+                    const matched = searchAndFilter($child);
+
+                    if (matched) {
+                        $child.show();
+                        childMatched = true;
+                    } else {
+                        // If parent category matches, don't hide children even if they don't match
+                        if (hasMatch) {
+                            $child.show();
+                        } else {
+                            $child.hide();
+                        }
+                    }
+                });
+
+                if (childMatched || hasMatch) {
+                    $childrenUl.show();
+                    $listItem.children("span").first().text("▼");
+                } else {
+                    $childrenUl.hide();
+                    $listItem.children("span").first().text("▶");
+                }
+            }
+
+            if (hasMatch || childMatched) {
+                $listItem.show();
+                $listItem.parents("li").each(function () {
+                    $(this).show();
+                    $(this).children("ul").show();
+                    $(this).children("span").first().text("▼");
+                });
+                return true;
+            } else {
+                $listItem.hide();
+                return false;
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // Toggle functionality for expanding/collapsing categories
+        $(document).on("click", ".toggle-icon", function () {
+            var childContainer = $(this).siblings("ul"); // Get the child container
+
+            if (childContainer.is(":visible")) {
+                childContainer.hide();
+                $(this).text("▶"); // Collapsed icon
+            } else {
+                childContainer.show();
+                $(this).text("▼"); // Expanded icon
+            }
+        });
+    });
+</script>
+
+
+<script>
+    // document.getElementById('toggleSidebarBtn').addEventListener('click', function () {
+    //     const sidebar = document.getElementById('sidebar');
+    //     const viewer = document.querySelector('.pdf-viewer');
+    //     sidebar.classList.toggle('closed');
+    //     viewer.classList.toggle('full');
+    // });
+
+    // Logout Function
+    document.getElementById('logoutBtn').addEventListener('click', function () {
+        // alert('Logging out...');
+        // Redirect or clear session
+        window.location.href = 'login.html';
+    });
+
+
+
+    // Toggle the sidebar collapse/expand
+    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+    const sidebar = document.getElementById('sidebar');
+
+    toggleSidebarBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+    });
+</script>
+
+<script>
+
+
+    function loadPDF(pdfUrl, tabId) {
+
+        cleanupTabContent(tabId);
+        const pdfContainers = document.getElementById('pdfContainers');
+
+        if (!pdfContainers) {
+            console.error('Error: #pdfContainers element not found!');
+            return;
+        }
+
+        let existingContainer = document.getElementById(`pdfContainer-${tabId}`);
+        if (!existingContainer) {
+            existingContainer = document.createElement('div');
+            existingContainer.id = `pdfContainer-${tabId}`;
+            existingContainer.className = 'pdf-container';
+            pdfContainers.appendChild(existingContainer);
+        }
+
+        existingContainer.innerHTML = '';
+
+        if (!pdfUrl) {
+            console.warn('No PDF URL provided');
+            const message = document.createElement('p');
+            message.textContent = 'No PDF available.';
+            message.style.textAlign = 'center';
+            message.style.color = '#ff0000';
+            message.style.padding = '20px';
+            existingContainer.appendChild(message);
+            switchTab(tabId);
+            return;
+        }
+
+        // Show loading indicator
+        const loadingIndicator = document.createElement('p');
+        loadingIndicator.textContent = 'Loading PDF...';
+        loadingIndicator.style.textAlign = 'center';
+        loadingIndicator.style.color = '#007bff';
+        loadingIndicator.style.padding = '20px';
+        loadingIndicator.id = `loading-${tabId}`;
+        existingContainer.appendChild(loadingIndicator);
+
+        // Switch tab immediately so the user sees the container and loading text
+        switchTab(tabId);
+
+        // Use requestAnimationFrame to ensure the loading text is painted before iframe is added
+        requestAnimationFrame(() => {
+            // Create and configure the iframe
+            const iframe = document.createElement('iframe');
+            iframe.src = `viewer.html?file=${encodeURIComponent(pdfUrl)}`;
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframe.style.display = 'none';
+
+            iframe.onload = () => {
+                console.log('PDF loaded successfully');
+                loadingIndicator.remove();
+                iframe.style.display = 'block';
+            };
+
+            iframe.onerror = () => {
+                console.error('Error loading PDF');
+                loadingIndicator.remove();
+                const errorMsg = document.createElement('p');
+                errorMsg.textContent = 'Error loading PDF.';
+                errorMsg.style.textAlign = 'center';
+                errorMsg.style.color = '#ff0000';
+                existingContainer.appendChild(errorMsg);
+            };
+
+            existingContainer.appendChild(iframe);
+        });
+    }
+
+
+
+
+    // function loadPDF(pdfUrl, tabId) {
+    //     const pdfContainers = document.getElementById('pdfContainers');
+
+    //     if (!pdfContainers) {
+    //         console.error('Error: #pdfContainers element not found!');
+    //         return;
+    //     }
+
+    //     let existingContainer = document.getElementById(`pdfContainer-${tabId}`);
+    //     if (!existingContainer) {
+    //         existingContainer = document.createElement('div');
+    //         existingContainer.id = `pdfContainer-${tabId}`;
+    //         existingContainer.className = 'pdf-container';
+    //         pdfContainers.appendChild(existingContainer);
+    //     }
+
+    //     existingContainer.innerHTML = '';
+
+    //     if (!pdfUrl) {
+    //         console.warn('No PDF URL provided');
+    //         const message = document.createElement('p');
+    //         message.textContent = 'No PDF available.';
+    //         message.style.textAlign = 'center';
+    //         message.style.color = '#ff0000';
+    //         message.style.padding = '20px';
+    //         existingContainer.appendChild(message);
+    //         switchTab(tabId);
+    //         return;
+    //     }
+
+    //     // Show loading indicator
+    //     const loadingIndicator = document.createElement('p');
+    //     loadingIndicator.textContent = 'Loading PDF...';
+    //     loadingIndicator.style.textAlign = 'center';
+    //     loadingIndicator.style.color = '#007bff';
+    //     loadingIndicator.style.padding = '20px';
+    //     loadingIndicator.id = `loading-${tabId}`;
+    //     existingContainer.appendChild(loadingIndicator);
+
+    //     // Create the iframe
+    //     const iframe = document.createElement('iframe');
+    //     iframe.src = `viewer.html?file=${encodeURIComponent(pdfUrl)}`;
+    //     iframe.style.width = '100%';
+    //     iframe.style.height = '100%';
+    //     iframe.style.border = 'none';
+    //     iframe.style.display = 'none';
+
+    //     iframe.onload = () => {
+    //         console.log('PDF loaded successfully');
+    //         loadingIndicator.remove();
+    //         iframe.style.display = 'block';
+    //     };
+
+    //     iframe.onerror = () => {
+    //         console.error('Error loading PDF');
+    //         loadingIndicator.remove();
+    //         const errorMsg = document.createElement('p');
+    //         errorMsg.textContent = 'Error loading PDF.';
+    //         errorMsg.style.textAlign = 'center';
+    //         errorMsg.style.color = '#ff0000';
+    //         existingContainer.appendChild(errorMsg);
+    //     };
+
+    //     // Defer appending the iframe to ensure the loading indicator is rendered first
+    //     setTimeout(() => {
+    //         existingContainer.appendChild(iframe);
+    //     }, 0);
+
+    //     switchTab(tabId);
+    // }
+
+
+
+
+
+
+
+
+    function openTab(fileUrl, tabId, catname) {
+        const tabHeaders = document.getElementById('tabHeaders');
+
+        if (document.querySelector(`.tab[data-tab-id="${tabId}"]`)) {
+            switchTab(tabId);
+            return;
+        }
+
+        const openTabs = tabHeaders.querySelectorAll('.tab');
+        if (openTabs.length >= 5) {
+            alert("You can only open a maximum of 5 tabs at a time.");
+            return;
+        }
+
+        const newTab = document.createElement('div');
+        newTab.className = 'tab';
+        newTab.setAttribute('data-tab-id', tabId);
+        newTab.innerHTML = `${catname} <span class="close-btn" onclick="closeTab('${tabId}')">✕</span>`;
+        newTab.addEventListener('click', () => switchTab(tabId));
+        tabHeaders.appendChild(newTab);
+
+        const extension = fileUrl.split('.').pop().toLowerCase();
+
+        if (extension === 'pdf') {
+            loadPDF(`https://skillbypm.com/public/${fileUrl}`, tabId);
+        } else if (extension === 'svg') {
+            // Before `loadSVG(...)`, use setTimeout to defer
+            setTimeout(() => {
+                loadSVG(fileUrl, tabId);
+            }, 10);
+
+            //loadSVG(fileUrl, tabId);
+        } else {
+            alert('Unsupported file type');
+        }
+    }
+
+
+
+
+
+    // function openTab(pdfUrl, tabId, catname) {
+    //     const tabHeaders = document.getElementById('tabHeaders');
+
+    //     // If tab already exists, just switch to it
+    //     if (document.querySelector(`.tab[data-tab-id="${tabId}"]`)) {
+    //         switchTab(tabId);
+    //         return;
+    //     }
+
+    //     // Count current open tabs
+    //     const openTabs = tabHeaders.querySelectorAll('.tab');
+    //     if (openTabs.length >= 5) {
+    //         alert("You can only open a maximum of 5 tabs at a time.");
+    //         return;
+    //     }
+
+    //     // Create new tab
+    //     const newTab = document.createElement('div');
+    //     newTab.className = 'tab';
+    //     newTab.setAttribute('data-tab-id', tabId);
+    //     newTab.innerHTML = `${catname} <span class="close-btn" onclick="closeTab('${tabId}')">✕</span>`;
+    //     newTab.addEventListener('click', () => switchTab(tabId));
+    //     tabHeaders.appendChild(newTab);
+
+    //     // Load the PDF
+
+    //     loadPDF(`https://skillbypm.com/public/${pdfUrl}`, tabId);
+    // }
+
+
+
+
+
+    // Store tab history in an array (last active tab will be the last element)
+    const tabHistory = [];
+    function switchTab(tabId) {
+        // Deactivate all tabs
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+
+        // Activate the selected tab
+        const activeTab = document.querySelector(`.tab[data-tab-id="${tabId}"]`);
+        if (activeTab) {
+            activeTab.classList.add('active');
+        }
+
+        // Hide all containers
+        document.querySelectorAll('.pdf-container').forEach(container => {
+            container.style.display = 'none';
+        });
+
+        // Show the selected container
+        const pdfContainer = document.getElementById(`pdfContainer-${tabId}`);
+        if (pdfContainer) {
+            pdfContainer.style.display = 'block';
+
+            // Re-attach listeners if SVG is inside
+            const svg = pdfContainer.querySelector('svg');
+            if (svg && typeof tabState[tabId] === 'object' && !tabState[tabId].rebound) {
+                // Optional: clean up any overlays/highlights
+                svg.querySelectorAll('.highlighted-overlay, .link-line').forEach(el => el.remove());
+
+                // Optional: rebind if necessary (if events lost on hide)
+                // svg.addEventListener('click', ...); // Add if needed
+
+                tabState[tabId].rebound = true;
+            }
+        }
+
+        // Update tab history
+        if (tabHistory[tabHistory.length - 1] !== tabId) {
+            tabHistory.push(tabId);
+        }
+    }
+
+    // function switchTab(tabId) {
+    //     // Deactivate all tabs
+    //     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+
+    //     // Activate the selected tab
+    //     const activeTab = document.querySelector(`.tab[data-tab-id="${tabId}"]`);
+    //     if (activeTab) {
+    //         activeTab.classList.add('active');
+    //     }
+
+    //     // Hide all PDF containers
+    //     document.querySelectorAll('.pdf-container').forEach(container => container.style.display = 'none');
+
+    //     // Show the corresponding PDF container
+    //     const pdfContainer = document.getElementById(`pdfContainer-${tabId}`);
+    //     if (pdfContainer) {
+    //         pdfContainer.style.display = 'block';
+    //     }
+
+    //     // Update tab history (avoid duplicate entries)
+    //     if (tabHistory[tabHistory.length - 1] !== tabId) {
+    //         tabHistory.push(tabId);
+    //     }
+    // }
+
+    function closeTab(tabId) {
+        // Remove the tab element
+        const tab = document.querySelector(`.tab[data-tab-id="${tabId}"]`);
+        if (tab) {
+            tab.remove();
+        }
+
+        // Remove the corresponding PDF container
+        const pdfContainer = document.getElementById(`pdfContainer-${tabId}`);
+        if (pdfContainer) {
+            pdfContainer.remove();
+        }
+
+        // Remove the closed tab from history
+        const tabIndex = tabHistory.indexOf(tabId);
+        if (tabIndex !== -1) {
+            tabHistory.splice(tabIndex, 1);
+        }
+
+        // Switch to the last active tab (if any remain)
+        if (tabHistory.length > 0) {
+            const lastTabId = tabHistory[tabHistory.length - 1];
+            switchTab(lastTabId);
+        }
+    }
+
+
+
+
+
+
+
+
+    // Render Categories without re-rendering
+    function renderCategories(categories, parentElement) {
+
+        categories.sort((a, b) => a.name.localeCompare(b.name));
+
+        categories.forEach((category) => {
+            const li = document.createElement('li');
+            li.setAttribute('data-name', category.name.toLowerCase());
+
+            // Create a span for category name or PDF link
+            const span = document.createElement('span');
+            span.textContent = category.name;
+
+            if (category.pdfs && category.pdfs.length > 0) {
+                // Ensure the PDF icon and clickable span are rendered correctly
+                span.innerHTML = `
+                        <i class="bx bxs-file-pdf"></i> 
+                        ${category.name}
+                    `;
+                span.style.cursor = 'pointer';
+                span.onclick = () => openTab(category.pdfs[0].pdf, category.id, category.name);
+            }
+
+            // Create a container for children (if any)
+            const childContainer = document.createElement('ul');
+            childContainer.style.display = 'none'; // Initially hide children
+
+            // If there are children, add an expand/collapse toggle
+            if (category.children && category.children.length > 0) {
+                const toggleIcon = document.createElement('span');
+                toggleIcon.textContent = '▶'; // Collapsed icon
+                toggleIcon.style.cursor = 'pointer';
+                toggleIcon.style.marginRight = '5px';
+
+                // Expand/Collapse logic
+                toggleIcon.addEventListener('click', () => {
+                    if (childContainer.style.display === 'none') {
+                        childContainer.style.display = 'block';
+                        toggleIcon.textContent = '▼'; // Expanded icon
+                    } else {
+                        childContainer.style.display = 'none';
+                        toggleIcon.textContent = '▶'; // Collapsed icon
+                    }
+                });
+
+                li.appendChild(toggleIcon);
+            }
+
+            li.appendChild(span);
+
+            // Recursively render children if any
+            if (category.children && category.children.length > 0) {
+                renderCategories(category.children, childContainer);
+                li.appendChild(childContainer);
+            }
+
+            parentElement.appendChild(li);
+        });
+    }
+
+
+
+
+
+
+
+    // function handleSearch(event) {
+    //     const searchTerm = event.target.value.toLowerCase();
+    //     const parentElement = document.getElementById('categoryList');
+    //     const categoryItems = parentElement.querySelectorAll('li');
+
+    //     categoryItems.forEach((li) => {
+    //         const categoryName = li.getAttribute('data-name');
+    //         const pdfLink = li.querySelector('span > i'); // Check if there is a PDF link
+
+    //         // Check if the main category name or a PDF inside the category matches the search term
+    //         if (categoryName.includes(searchTerm) || (pdfLink && pdfLink.textContent.toLowerCase().includes(searchTerm))) {
+    //             li.style.display = ''; // Show the main category if it matches the search term
+
+    //             // Use jQuery to find and show the children of the matching parent
+    //             $(li).parents("li").each(function () {
+    //                 $(this).children("ul").show(); // Show the parent category's children
+    //                 $(this).children("i.js-toggle-icon").text("-"); // Change the icon to '-'
+    //             });
+    //         } else {
+    //             li.style.display = 'none'; // Hide the main category if it doesn't match
+    //         }
+
+    //         // Ensure that child categories remain visible, regardless of search term
+    //         const children = li.querySelectorAll('ul > li'); // Find all child categories
+    //         children.forEach((child) => {
+    //             child.style.display = ''; // Always show child categories
+    //         });
+
+    //         // Ensure toggle icon and child container are handled correctly
+    //         const childContainer = li.querySelector('ul'); // Get child container (if any)
+    //         const toggleIcon = li.querySelector('span'); // Find the toggle icon (expand/collapse)
+
+    //         if (toggleIcon && childContainer) {
+    //             // Ensure the icon reflects the expanded/collapsed state of the children
+    //             toggleIcon.textContent = '▶'; // Default to collapsed (for simplicity)
+    //             childContainer.style.display = 'none'; // Start with children collapsed
+    //         }
+    //     });
+    // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // Fetch and display categories in the sidebar
+
+
+    async function loadCategories() {
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        loadingSpinner.style.display = 'block';  // Show the loading spinner inside sidebar
+
+        try {
+            const response = await fetch('https://skillbypm.com/api/categoriesmain.php');
+            const data = await response.json();
+
+            if (data.status === 'success' && data.categories.length > 0) {
+                const treeContainer = document.getElementById('categoryList');
+                renderCategories(data.categories, treeContainer);
+            } else {
+                console.error('No categories available or error fetching categories:', data.message);
+                const treeContainer = document.getElementById('categoryList');
+                treeContainer.innerHTML = '<li>No categories available</li>';
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            const treeContainer = document.getElementById('categoryList');
+            treeContainer.innerHTML = '<li>Error loading categories. Please try again later.</li>';
+        } finally {
+            loadingSpinner.style.display = 'none';  // Hide the loading spinner after data is loaded
+        }
+    }
+
+
+    //http://127.0.0.1:8000/api/bitmap-data
+
+
+    async function loadBitmaps() {
+        const treeContainer = document.getElementById('categoryList');
+        treeContainer.innerHTML = '';
+
+        const bitmapsContainer = document.createElement('li');
+        const rootToggleIcon = document.createElement('span');
+        rootToggleIcon.textContent = '▶';
+        rootToggleIcon.style.cursor = 'pointer';
+        rootToggleIcon.style.marginRight = '5px';
+
+        const rootLabel = document.createElement('span');
+        rootLabel.textContent = 'Bitmaps'.toUpperCase(); // Converts to 'BITMAPS'
+
+
+
+        const bitmapList = document.createElement('ul');
+        bitmapList.style.display = 'none';
+
+        rootToggleIcon.addEventListener('click', () => {
+            const isVisible = bitmapList.style.display === 'block';
+            bitmapList.style.display = isVisible ? 'none' : 'block';
+            rootToggleIcon.textContent = isVisible ? '▶' : '▼';
+        });
+
+        bitmapsContainer.appendChild(rootToggleIcon);
+        bitmapsContainer.appendChild(rootLabel);
+
+        try {
+            const response = await fetch('https://web3hike.com/api/bitmap-data');
+            const data = await response.json();
+
+            if (data.success && data.categories.length > 0) {
+                data.categories.forEach(category => {
+                    const categoryLi = document.createElement('li');
+
+                    const categoryToggle = document.createElement('span');
+                    categoryToggle.textContent = '▶';
+                    categoryToggle.style.cursor = 'pointer';
+                    categoryToggle.style.marginRight = '5px';
+
+                    const categoryLabel = document.createElement('span');
+                    categoryLabel.textContent = category.name;
+
+                    const modelList = document.createElement('ul');
+                    modelList.style.display = 'none';
+
+                    categoryToggle.addEventListener('click', () => {
+                        const isVisible = modelList.style.display === 'block';
+                        modelList.style.display = isVisible ? 'none' : 'block';
+                        categoryToggle.textContent = isVisible ? '▶' : '▼';
+                    });
+
+                    categoryLi.appendChild(categoryToggle);
+                    categoryLi.appendChild(categoryLabel);
+
+                    if (category.subcategories && category.subcategories.length > 0) {
+                        category.subcategories.forEach(subcategory => {
+                            const modelLi = document.createElement('li');
+                            const span = document.createElement('span');
+                            span.textContent = subcategory.name;
+                            span.style.cursor = 'default';
+
+                            if (subcategory.file_path) {
+                                // Create SVG icon element (same as before)
+                                const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                                svgIcon.setAttribute("width", "16");
+                                svgIcon.setAttribute("height", "16");
+                                svgIcon.setAttribute("viewBox", "0 0 24 24");
+                                svgIcon.setAttribute("fill", "none");
+                                svgIcon.setAttribute("stroke", "currentColor");
+                                svgIcon.setAttribute("stroke-width", "2");
+                                svgIcon.setAttribute("stroke-linecap", "round");
+                                svgIcon.setAttribute("stroke-linejoin", "round");
+                                svgIcon.style.marginRight = "6px";
+                                svgIcon.style.verticalAlign = "middle";
+                                svgIcon.style.cursor = "pointer";
+
+                                const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                                path1.setAttribute("d", "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z");
+                                const path2 = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+                                path2.setAttribute("points", "14 2 14 8 20 8");
+
+                                svgIcon.appendChild(path1);
+                                svgIcon.appendChild(path2);
+
+                                // When clicking the icon or the name, open the SVG in new tab via your openTab function
+                                const openSvg = () => openTab(subcategory.file_path, subcategory.id, subcategory.name);
+
+                                svgIcon.addEventListener('click', openSvg);
+                                span.style.cursor = 'pointer';
+                                span.addEventListener('click', openSvg);
+
+                                modelLi.appendChild(svgIcon);
+                                modelLi.appendChild(span);
+                            } else {
+                                modelLi.appendChild(span);
+                            }
+
+                            modelList.appendChild(modelLi);
+                        });
+                    } else {
+                        const emptyModelLi = document.createElement('li');
+                        emptyModelLi.textContent = 'No subcategories';
+                        modelList.appendChild(emptyModelLi);
+                    }
+
+                    categoryLi.appendChild(modelList);
+                    bitmapList.appendChild(categoryLi);
+                });
+            } else {
+                bitmapList.innerHTML = '<li>No bitmap categories available</li>';
+            }
+
+        } catch (error) {
+            console.error('Error loading bitmaps:', error);
+            bitmapList.innerHTML = '<li>Error loading bitmaps.</li>';
+        }
+
+        bitmapsContainer.appendChild(bitmapList);
+        treeContainer.appendChild(bitmapsContainer);
+    }
+
+
+    let scale = 0.4;
+    let translate = { x: 0, y: 0 };
+    let isPanning = false;
+    let panStart = { x: 0, y: 0 };
+    let mouseMoved = false;
+    let svgElement = null;        // The <svg> element to transform
+    let svgContainer = null;      // The container div of SVG
+
+
+    function updateTransform() {
+        if (!svgElement) {
+            console.warn("svgElement is null, can't update transform");
+            return;
+        }
+        svgElement.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
+        svgElement.style.transformOrigin = '0 0';  // or 'center'
+    }
+
+    function handleWheel(e) {
+        e.preventDefault();
+        const zoomFactor = 0.30;
+        const delta = e.deltaY > 0 ? 1 - zoomFactor : 1 + zoomFactor;
+
+        const proposedScale = scale * delta;
+        const minScale = 0.4;
+        const maxScale = 160;
+
+        const newScale = Math.min(Math.max(proposedScale, minScale), maxScale);
+
+        if (newScale === scale) return;
+
+        const rect = svgElement.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+
+        translate.x -= offsetX * (newScale - scale) / scale;
+        translate.y -= offsetY * (newScale - scale) / scale;
+
+        scale = newScale;
+        updateTransform();
+    }
+
+    function handleMouseDown(e) {
+        isPanning = true;
+        panStart = { x: e.clientX, y: e.clientY };
+        mouseMoved = false;
+    }
+
+
+
+    function handleMouseUp(e) {
+        isPanning = false;
+    }
+
+    function handleMouseMove(e) {
+        if (!isPanning) return;
+
+        const dx = e.clientX - panStart.x;
+        const dy = e.clientY - panStart.y;
+
+        if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+            mouseMoved = true;
+        }
+
+        const dampening = 0.5;
+        translate.x += dx * dampening;
+        translate.y += dy * dampening;
+
+        panStart = { x: e.clientX, y: e.clientY };
+        updateTransform();
+    }
+
+    function cleanupTabContent(tabId) {
+        const container = document.getElementById(`pdfContainer-${tabId}`);
+        if (container) container.innerHTML = '';
+
+        if (tabState[tabId]?.listeners) {
+            tabState[tabId].listeners.forEach(({ el, type, fn }) => {
+                el.removeEventListener(type, fn);
+            });
+        }
+
+        delete tabState[tabId];
+    }
+
+
+    const tabState = {};
+
+    async function loadSVG(svgUrl, tabId) {
+        const subcatid = tabId;
+        console.log("Loading SVG for Subcategory ID:", subcatid);
+
+        const pdfContainers = document.getElementById('pdfContainers');
+        if (!pdfContainers) {
+            console.error('Error: #pdfContainers element not found!');
+            return;
+        }
+
+        let existingContainer = document.getElementById(`pdfContainer-${tabId}`);
+        if (!existingContainer) {
+            existingContainer = document.createElement('div');
+            existingContainer.id = `pdfContainer-${tabId}`;
+            existingContainer.className = 'pdf-container';
+
+            pdfContainers.appendChild(existingContainer);
+        }
+
+        cleanupTabContent(tabId);
+
+        existingContainer.innerHTML = `
+    <div style="width: 100%; background-color: #f8f9fa; padding: 6px 10px; border-bottom: 1px solid #ddd; display: flex; align-items: center; gap: 15px;">
+        <label style="margin: 0;">
+            <input type="checkbox" id="show-nets-${tabId}" checked />
+            Show Nets
+        </label>
+        <label style="margin: 0;">
+            <input type="checkbox" id="highlight-components-${tabId}" />
+            Highlight Components
+        </label>
+        <!-- Add more controls here -->
+    </div>
+
+    <div id="svg-container-${tabId}" 
+         style="position: relative; width: 100%; height: calc(100% - 40px); overflow: hidden; background-color: #fff;" 
+         class="w-100 d-flex align-items-center justify-content-center text-muted">
+        <p>Loading SVG content...</p>
+    </div>
+`;
+
+
+        switchTab(tabId);
+
+        try {
+            // Load and inject the SVG
+            const response = await fetch(svgUrl);
+            const svgContent = await response.text();
+
+            const container = document.getElementById(`svg-container-${tabId}`);
+
+            // Create wrapper div to hold SVG and right sidebar side-by-side
+            container.innerHTML = '';  // Clear loading text
+            container.style.display = 'flex';
+            container.style.height = '100%';
+            container.style.overflow = 'hidden';
+
+            // Create SVG wrapper
+            const svgWrapper = document.createElement('div');
+            svgWrapper.style.flex = '1';  // take all available width except sidebar
+            svgWrapper.style.overflow = 'auto';
+            svgWrapper.style.position = 'relative';
+            svgWrapper.style.backgroundColor = '#fff';
+
+            svgWrapper.innerHTML = svgContent;
+
+            // Get the injected SVG element
+            const svg = svgWrapper.querySelector('svg');
+            if (!svg) {
+                alert('SVG element not found in the content.');
+                return;
+            }
+            svgElement = svg;
+
+            // Append SVG wrapper to container
+            container.appendChild(svgWrapper);
+
+            // Create right sidebar container
+            const rightBar = document.createElement('div');
+            rightBar.id = 'rightBar';
+            rightBar.style.width = '220px';
+            rightBar.style.backgroundColor = '#fff';
+            rightBar.style.borderLeft = '1px solid #ccc';
+            rightBar.style.overflowY = 'auto';
+            rightBar.style.padding = '10px';
+            rightBar.style.boxSizing = 'border-box';
+
+            // Add only table headings (no data)
+            rightBar.innerHTML = `
+            <h4>Component Data</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+    <thead style="background: #f0f0f5; position: sticky; top: 0; z-index: 1;">
+        <tr>
+            <th style="border: 1px solid #ddd; padding: 10px; text-align: left; background-color: #e6e6ee;">Net</th>
+            <th style="border: 1px solid #ddd; padding: 10px; text-align: left; background-color: #e6e6ee;">Footprint</th>
+            <th style="border: 1px solid #ddd; padding: 10px; text-align: left; background-color: #e6e6ee;">Pin</th>
+        </tr>
+    </thead>
+    <tbody id="rightBarTableBody">
+        <!-- Example row -->
+        <!-- <tr>
+            <td style="border: 1px solid #eee; padding: 8px;">NET123</td>
+            <td style="border: 1px solid #eee; padding: 8px;">SOT-23</td>
+            <td style="border: 1px solid #eee; padding: 8px;">3</td>
+        </tr> -->
+    </tbody>
+</table>
+
+        `;
+
+            // Append right sidebar to container
+            container.appendChild(rightBar);
+
+            // Your existing zoom/pan setup and event listeners
+            scale = 0.4;
+            translate = { x: 0, y: 0 };
+            updateTransform();
+
+            // container.addEventListener('wheel', handleWheel, { passive: false });
+            container.addEventListener('wheel', function (e) {
+                const svgWrapper = e.currentTarget.querySelector('div:first-child');
+                if (svgWrapper && svgWrapper.contains(e.target)) {
+                    e.preventDefault();
+                    handleWheel(e);
+                }
+            }, { passive: false });
+
+            container.addEventListener('mousedown', handleMouseDown);
+            window.addEventListener('mouseup', handleMouseUp);
+            window.addEventListener('mousemove', handleMouseMove);
+
+
+            // Fetch SVG metadata
+            const responsedata = await fetch(`https://web3hike.com/api/svg-details/${subcatid}`);
+            const data = await responsedata.json();
+
+            if (data.success) {
+                //console.log('SVG Metadata:', data.data);
+                const componentData = data.data.componentData;
+                //const componentlinks = data.data.componentlinks;
+                const allComponents = data.data.components;
+                //const componentGroup = data.data.componentGroup;
+
+                let isDragging = false;
+
+                document.addEventListener('mousedown', () => { isDragging = false; });
+                document.addEventListener('mousemove', () => { isDragging = true; });
+                document.addEventListener('mouseup', () => {
+                    setTimeout(() => { isDragging = false; }, 0);
+                });
+
+                setupComponents(componentData, svg);
+                setupComponentsText(allComponents, svg);
+
+                svg.addEventListener('click', (event) => {
+                    if (isDragging) return;
+                    const target = event.target;
+
+                    if (target === svg) {
+                        return;
+                    }
+
+                    svg.querySelectorAll('.link-line').forEach(line => line.remove());
+                    svg.querySelectorAll('.highlighted-overlay').forEach(el => el.remove());
+                    const tbody = document.getElementById('rightBarTableBody');
+
+                    // Clear all previous rows
+                    tbody.innerHTML = '';
+
+
+                    highlightSelectedElement(target);
+
+                    const componentId = generateComponentIdFromCoords(target);
+                    const main = parseComponentCoordinates(componentId);
+
+                    if (!main) return;
+
+                    handleComponentClick(componentId, componentData, svg);
+
+
+                    const targetCenter = {
+                        x: main.x + main.width / 2,
+                        y: main.y + main.height / 2
+                    };
+
+
+                });
+
+            } else {
+                console.warn('SVG metadata not found');
+            }
+
+        } catch (err) {
+            console.error('Failed to load SVG or metadata:', err);
+            const container = document.getElementById(`svg-container-${tabId}`);
+            container.innerHTML = `<p style="color:red;">Failed to load SVG file.</p>`;
+        }
+    }
+
+
+
+
+
+
+    function handleComponentClick(componentId, componentsList, svg) {
+        svg.querySelectorAll('.highlighted-overlay').forEach(el => el.remove());
+        const clickedComponent = componentsList.find(c => c.component === componentId);
+        if (!clickedComponent) return;
+
+        //console.log(clickedComponent);
+        const netName = clickedComponent.netName; // or clickedComponent.netname if exists
+
+        // Get all components with the same net name
+        const relatedComponents = componentsList.filter(c => c.netName === netName);
+
+        console.log(relatedComponents);
+        // Extract coordinates
+        const points = relatedComponents.map(c => {
+            const [xPart, yPart] = c.component.split('_');
+            const x = parseInt(xPart.replace('x', ''));
+            const y = parseInt(yPart.replace('y', ''));
+            return {
+                x,
+                y,
+                target: c.target || ''
+            };
+        });
+
+        drawConnectionLine(points, svg);
+
+        const tableBody = document.getElementById('rightBarTableBody');
+        tableBody.innerHTML = ''; // Clear existing rows
+
+        relatedComponents.forEach(component => {
+            const tr = document.createElement('tr');
+
+            const netCell = document.createElement('td');
+            netCell.textContent = component.netName || '-';
+
+            const footprintCell = document.createElement('td');
+            footprintCell.textContent = component.footprint || '-';
+
+            const pinCell = document.createElement('td');
+            pinCell.textContent = component.pin || '-';
+
+            tr.appendChild(netCell);
+            tr.appendChild(footprintCell);
+            tr.appendChild(pinCell);
+
+            tableBody.appendChild(tr);
+        });
+    }
+
+
+    function drawConnectionLine(points, svg) {
+        if (!points || points.length < 2) {
+            console.warn('Not enough points to draw a connection.');
+            return;
+        }
+
+        //const svg = document.querySelector('#svg-container svg');
+        if (!svg) {
+            console.error('SVG element not found inside #svg-container');
+            return;
+        }
+
+        // Cleanup previous highlights and lines
+        svg.querySelectorAll('.link-line').forEach(line => line.remove());
+        svg.querySelectorAll('.highlighted-overlay').forEach(el => el.remove());
+
+        const tolerance = 2;
+        const centers = [];
+
+        points.forEach(p => {
+            if (!p.target) return;
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = p.target.trim();
+            const targetEl = tempDiv.firstChild;
+            if (!targetEl) return;
+
+            const tagName = targetEl.tagName.toLowerCase();
+
+            if (tagName === 'rect') {
+                const tx = parseFloat(targetEl.getAttribute('x'));
+                const ty = parseFloat(targetEl.getAttribute('y'));
+                const tw = parseFloat(targetEl.getAttribute('width'));
+                const th = parseFloat(targetEl.getAttribute('height'));
+
+                if (!isNaN(tx) && !isNaN(ty) && !isNaN(tw) && !isNaN(th)) {
+                    const center = {
+                        x: tx + tw / 2,
+                        y: ty + th / 2
+                    };
+                    centers.push(center);
+
+                    const match = Array.from(svg.querySelectorAll('rect')).find(r => {
+                        const rx = parseFloat(r.getAttribute('x'));
+                        const ry = parseFloat(r.getAttribute('y'));
+                        const rw = parseFloat(r.getAttribute('width'));
+                        const rh = parseFloat(r.getAttribute('height'));
+                        return (
+                            Math.abs(rx - tx) < tolerance &&
+                            Math.abs(ry - ty) < tolerance &&
+                            Math.abs(rw - tw) < tolerance &&
+                            Math.abs(rh - th) < tolerance
+                        );
+                    });
+
+                    if (match) {
+                        const overlay = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        overlay.setAttribute("x", tx);
+                        overlay.setAttribute("y", ty);
+                        overlay.setAttribute("width", tw);
+                        overlay.setAttribute("height", th);
+                        overlay.setAttribute("rx", 8);
+                        overlay.setAttribute("fill", "rgba(0, 128, 0, 0.6)");
+                        overlay.setAttribute("stroke", "#00c853");
+                        overlay.setAttribute("stroke-width", "2");
+                        overlay.setAttribute("pointer-events", "none");
+                        overlay.classList.add("highlighted-overlay");
+                        svg.appendChild(overlay);
+                    }
+                }
+
+            } else if (tagName === 'circle') {
+                const cx = parseFloat(targetEl.getAttribute('cx'));
+                const cy = parseFloat(targetEl.getAttribute('cy'));
+                const r = parseFloat(targetEl.getAttribute('r'));
+
+                if (!isNaN(cx) && !isNaN(cy) && !isNaN(r)) {
+                    const center = {
+                        x: cx,
+                        y: cy
+                    };
+                    centers.push(center);
+
+                    const match = Array.from(svg.querySelectorAll('circle')).find(c => {
+                        const ccx = parseFloat(c.getAttribute('cx'));
+                        const ccy = parseFloat(c.getAttribute('cy'));
+                        const cr = parseFloat(c.getAttribute('r'));
+                        return (
+                            Math.abs(ccx - cx) < tolerance &&
+                            Math.abs(ccy - cy) < tolerance &&
+                            Math.abs(cr - r) < tolerance
+                        );
+                    });
+
+                    if (match) {
+                        const overlay = document.createElementNS("http://www.w3.org/2000/svg",
+                            "circle");
+                        overlay.setAttribute("cx", cx);
+                        overlay.setAttribute("cy", cy);
+                        overlay.setAttribute("r", r);
+                        overlay.setAttribute("fill", "rgba(0, 128, 0, 0.6)");
+                        overlay.setAttribute("stroke", "#00c853");
+                        overlay.setAttribute("stroke-width", "2");
+                        overlay.setAttribute("pointer-events", "none");
+                        overlay.classList.add("highlighted-overlay");
+                        svg.appendChild(overlay);
+                    }
+                }
+
+            } else if (tagName === 'ellipse') {
+                const cx = parseFloat(targetEl.getAttribute('cx'));
+                const cy = parseFloat(targetEl.getAttribute('cy'));
+                const rx = parseFloat(targetEl.getAttribute('rx'));
+                const ry = parseFloat(targetEl.getAttribute('ry'));
+
+                if (!isNaN(cx) && !isNaN(cy) && !isNaN(rx) && !isNaN(ry)) {
+                    const center = {
+                        x: cx,
+                        y: cy
+                    };
+                    centers.push(center);
+
+                    const match = Array.from(svg.querySelectorAll('ellipse')).find(e => {
+                        const ecx = parseFloat(e.getAttribute('cx'));
+                        const ecy = parseFloat(e.getAttribute('cy'));
+                        const erx = parseFloat(e.getAttribute('rx'));
+                        const ery = parseFloat(e.getAttribute('ry'));
+                        return (
+                            Math.abs(ecx - cx) < tolerance &&
+                            Math.abs(ecy - cy) < tolerance &&
+                            Math.abs(erx - rx) < tolerance &&
+                            Math.abs(ery - ry) < tolerance
+                        );
+                    });
+
+                    if (match) {
+                        const overlay = document.createElementNS("http://www.w3.org/2000/svg",
+                            "ellipse");
+                        overlay.setAttribute("cx", cx);
+                        overlay.setAttribute("cy", cy);
+                        overlay.setAttribute("rx", rx);
+                        overlay.setAttribute("ry", ry);
+                        overlay.setAttribute("fill", "rgba(0, 128, 0, 0.6)");
+                        overlay.setAttribute("stroke", "#00c853");
+                        overlay.setAttribute("stroke-width", "2");
+                        overlay.setAttribute("pointer-events", "none");
+                        overlay.classList.add("highlighted-overlay");
+                        svg.appendChild(overlay);
+                    }
+                }
+            }
+        });
+
+        console.warn(`Total points: ${points.length}, Valid centers: ${centers.length}`);
+        console.log('Centers:', centers);
+
+        if (centers.length < 2) {
+            console.warn('Less than 2 usable centers. Cannot draw line.');
+            return;
+        }
+
+        centers.sort((a, b) => a.x - b.x);
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        let d = `M ${centers[0].x} ${centers[0].y}`;
+        let currentX = centers[0].x;
+        let currentY = centers[0].y;
+
+        for (let i = 1; i < centers.length; i++) {
+            const target = centers[i];
+            const midX = (currentX + target.x) / 2;
+
+            d += ` L ${midX} ${currentY}`;
+            d += ` L ${midX} ${target.y}`;
+            d += ` L ${target.x} ${target.y}`;
+
+            currentX = target.x;
+            currentY = target.y;
+        }
+
+        path.setAttribute('d', d);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', 'limegreen');
+        path.setAttribute('stroke-width', '8');
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-opacity', '0.7');
+        path.setAttribute('filter', 'url(#glow)');
+        path.classList.add('link-line');
+
+        svg.appendChild(path);
+    }
+
+    // function drawConnectionLine(points, svg) {
+
+
+
+    //     if (!points || points.length < 2) {
+    //         console.warn('Not enough points to draw a connection.');
+    //         return;
+    //     }
+
+    //     //const svg = document.querySelector('#svg-container svg');
+    //     if (!svg) {
+    //         console.error('SVG element not found inside #svg-container');
+    //         return;
+    //     }
+
+    //     // Cleanup previous highlights and lines
+    //     svg.querySelectorAll('.link-line').forEach(line => line.remove());
+    //     svg.querySelectorAll('.highlighted-overlay').forEach(el => el.remove());
+
+    //     const tolerance = 2;
+    //     const centers = [];
+
+    //     points.forEach(p => {
+    //         if (!p.target) return;
+
+    //         // Parse target SVG element
+    //         const tempDiv = document.createElement('div');
+    //         tempDiv.innerHTML = p.target.trim();
+    //         const targetEl = tempDiv.firstChild;
+
+    //         if (!targetEl) return;
+
+    //         const tagName = targetEl.tagName.toLowerCase();
+
+    //         if (tagName === 'rect') {
+    //             const tx = parseFloat(targetEl.getAttribute('x'));
+    //             const ty = parseFloat(targetEl.getAttribute('y'));
+    //             const tw = parseFloat(targetEl.getAttribute('width'));
+    //             const th = parseFloat(targetEl.getAttribute('height'));
+
+    //             const match = Array.from(svg.querySelectorAll('rect')).find(r => {
+    //                 const rx = parseFloat(r.getAttribute('x'));
+    //                 const ry = parseFloat(r.getAttribute('y'));
+    //                 const rw = parseFloat(r.getAttribute('width'));
+    //                 const rh = parseFloat(r.getAttribute('height'));
+
+    //                 return (
+    //                     Math.abs(rx - tx) < tolerance &&
+    //                     Math.abs(ry - ty) < tolerance &&
+    //                     Math.abs(rw - tw) < tolerance &&
+    //                     Math.abs(rh - th) < tolerance
+    //                 );
+    //             });
+
+    //             if (match) {
+    //                 // Add a highlight overlay
+    //                 const overlay = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    //                 overlay.setAttribute("x", tx);
+    //                 overlay.setAttribute("y", ty);
+    //                 overlay.setAttribute("width", tw);
+    //                 overlay.setAttribute("height", th);
+    //                 overlay.setAttribute("rx", 8);
+    //                 overlay.setAttribute("fill", "rgba(50,205,50,0.4)");
+    //                 overlay.setAttribute("stroke", "limegreen");
+    //                 overlay.setAttribute("stroke-width", "3");
+    //                 overlay.setAttribute("pointer-events", "none");
+    //                 overlay.classList.add("highlighted-overlay");
+    //                 svg.appendChild(overlay);
+
+    //                 centers.push({
+    //                     x: tx + tw / 2,
+    //                     y: ty + th / 2
+    //                 });
+    //             } else {
+    //                 console.warn('Could not find matching rect in SVG for:', p);
+    //             }
+    //         } else if (tagName === 'circle') {
+    //             const cx = parseFloat(targetEl.getAttribute('cx'));
+    //             const cy = parseFloat(targetEl.getAttribute('cy'));
+    //             const r = parseFloat(targetEl.getAttribute('r'));
+
+    //             const match = Array.from(svg.querySelectorAll('circle')).find(c => {
+    //                 const ccx = parseFloat(c.getAttribute('cx'));
+    //                 const ccy = parseFloat(c.getAttribute('cy'));
+    //                 const cr = parseFloat(c.getAttribute('r'));
+
+    //                 return (
+    //                     Math.abs(ccx - cx) < tolerance &&
+    //                     Math.abs(ccy - cy) < tolerance &&
+    //                     Math.abs(cr - r) < tolerance
+    //                 );
+    //             });
+
+    //             if (match) {
+    //                 const overlay = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    //                 overlay.setAttribute("cx", cx);
+    //                 overlay.setAttribute("cy", cy);
+    //                 overlay.setAttribute("r", r);
+    //                 overlay.setAttribute("fill", "rgba(50,205,50,0.4)");
+    //                 overlay.setAttribute("stroke", "limegreen");
+    //                 overlay.setAttribute("stroke-width", "3");
+    //                 overlay.setAttribute("pointer-events", "none");
+    //                 overlay.classList.add("highlighted-overlay");
+    //                 svg.appendChild(overlay);
+
+    //                 centers.push({
+    //                     x: cx,
+    //                     y: cy
+    //                 });
+    //             } else {
+    //                 console.warn('Could not find matching circle in SVG for:', p);
+    //             }
+    //         }
+
+    //     });
+
+    //     if (centers.length < 2) {
+    //         console.warn('Less than 2 matched centers. Cannot draw line.');
+    //         return;
+    //     }
+
+    //     // Sort by x for cleaner routing
+    //     centers.sort((a, b) => a.x - b.x);
+
+    //     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    //     let d = `M ${centers[0].x} ${centers[0].y}`;
+    //     let currentX = centers[0].x;
+    //     let currentY = centers[0].y;
+
+    //     for (let i = 1; i < centers.length; i++) {
+    //         const target = centers[i];
+    //         const midX = (currentX + target.x) / 2;
+
+    //         d += ` L ${midX} ${currentY}`;
+    //         d += ` L ${midX} ${target.y}`;
+    //         d += ` L ${target.x} ${target.y}`;
+
+    //         currentX = target.x;
+    //         currentY = target.y;
+    //     }
+
+    //     path.setAttribute('d', d);
+    //     path.setAttribute('fill', 'none');
+    //     path.setAttribute('stroke', 'limegreen');
+    //     path.setAttribute('stroke-width', '5');
+    //     path.setAttribute('stroke-linecap', 'round');
+    //     path.setAttribute('stroke-opacity', '0.7');
+    //     path.setAttribute('filter', 'url(#glow)');
+    //     path.classList.add('link-line');
+
+    //     svg.appendChild(path);
+    // }
+
+
+    function setupComponentsText(allComponents, svg) {
+
+
+        // const svgContainer = document.getElementById('svg-container');
+        // const svgElement1 = svgContainer.querySelector('svg');
+
+        const svgElement1 = svg;
+
+        // ✅ Create rectangles for each dynamic component
+        allComponents.forEach((comp1, index) => {
+            const coords = parseComponentCoordinates(comp1.component_location);
+            if (!coords) return;
+
+            const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+
+            rect.setAttribute("x", coords.x);
+            rect.setAttribute("y", coords.y);
+            rect.setAttribute("width", coords.width);
+            rect.setAttribute("height", coords.height);
+            rect.setAttribute("fill", "transparent"); // transparent fill
+            rect.style.cursor = "pointer";
+            rect.setAttribute("rx", 10);
+            rect.setAttribute("stroke", "white");
+            rect.setAttribute("stroke-width", 2);
+            rect.setAttribute("fill", "none");
+
+            const tick = document.createElementNS("http://www.w3.org/2000/svg", "text");
+
+            // Optionally trim text if it’s too long (optional step)
+            function trimTextToFit(text, maxChars) {
+                return text.length > maxChars ? text.substring(0, maxChars - 3) + "..." : text;
+            }
+            const maxChars = Math.floor(coords.width / 8); // tweak divisor as needed
+            const textToDisplay = trimTextToFit(comp1.component_name, maxChars);
+
+            tick.textContent = textToDisplay;
+            tick.setAttribute("fill", "rgba(255, 255, 255, 0.6)");
+            tick.setAttribute("font-weight", "bold");
+            tick.style.pointerEvents = "none"; // already included
+            tick.style.userSelect = "none";
+            tick.style.webkitUserSelect = "none";
+            tick.style.mozUserSelect = "none";
+            tick.style.msUserSelect = "none";
+            // Estimate font size dynamically based on width and text length
+            const textLength = textToDisplay.length;
+            const maxWidth = coords.width * 0.9;
+            let fontSize = Math.min(coords.width, coords.height) * 0.3;
+            const estimatedCharWidth = fontSize * 0.6;
+            const estimatedTextWidth = textLength * estimatedCharWidth;
+
+            if (estimatedTextWidth > maxWidth) {
+                fontSize = maxWidth / (textLength * 0.6);
+            }
+            tick.setAttribute("font-size", fontSize);
+
+            // Center the tick inside the rect
+            const centerX = coords.x + coords.width / 2;
+            const centerY = coords.y + coords.height / 2;
+            tick.setAttribute("text-anchor", "middle");
+            tick.setAttribute("dominant-baseline", "middle");
+
+            if (coords.height > coords.width) {
+                // Box is vertical: rotate text 90 degrees
+                tick.setAttribute("transform", `rotate(90, ${centerX}, ${centerY})`);
+                tick.setAttribute("x", centerX);
+                tick.setAttribute("y", centerY);
+            } else {
+                // Normal horizontal text
+                tick.setAttribute("x", centerX);
+                tick.setAttribute("y", centerY);
+            }
+
+
+            svgElement1.appendChild(rect);
+            svgElement1.appendChild(tick);
+        });
+    }
+
+    function generateComponentIdFromCoords(target) {
+        const bbox = target.getBBox();
+        // Example ID: "x10_y20_w100_h50"
+        return `x${Math.round(bbox.x)}_y${Math.round(bbox.y)}_w${Math.round(bbox.width)}_h${Math.round(bbox.height)}`;
+    }
+
+
+
+    // function drawSvgLine(p1, points, linkedData, svg) {
+
+    //     // console.log("linked", linkedData);
+    //     // const container = document.getElementById('svg-container');
+    //     // const svg = container.querySelector('svg');
+
+
+
+    //     if (!svg) {
+    //         console.warn('SVG element not found');
+    //         return;
+    //     }
+
+    //     // Remove old lines and reset old highlights
+    //     svg.querySelectorAll('.link-line').forEach(line => line.remove());
+    //     svg.querySelectorAll('.highlighted').forEach(el => {
+    //         el.classList.remove('highlighted');
+    //         el.removeAttribute('fill'); // reset fill if needed
+    //     });
+
+    //     // Helper: highlight a point (circle or rect)
+    //     function highlightPoint(point) {
+    //         const tolerance = 5;
+
+    //         // Try to highlight a circle
+    //         const circles = svg.querySelectorAll('circle');
+    //         for (const c of circles) {
+    //             const cx = parseFloat(c.getAttribute('cx'));
+    //             const cy = parseFloat(c.getAttribute('cy'));
+    //             if (Math.abs(cx - point.x) <= tolerance && Math.abs(cy - point.y) <= tolerance) {
+    //                 //console.log('Highlighting circle at', cx, cy);
+    //                 c.setAttribute('fill', '#8FBC8B');
+    //                 c.setAttribute('stroke', 'black'); // outline for visibility
+    //                 c.setAttribute('stroke-width', '3');
+    //                 c.setAttribute('style', 'fill: limegreen; stroke: black; stroke-width: 3px;');
+    //                 return true;
+    //             }
+    //         }
+
+    //         // Try to highlight a rect
+    //         const rects = svg.querySelectorAll('rect');
+    //         for (const r of rects) {
+    //             const x = parseFloat(r.getAttribute('x'));
+    //             const y = parseFloat(r.getAttribute('y'));
+    //             const width = parseFloat(r.getAttribute('width'));
+    //             const height = parseFloat(r.getAttribute('height'));
+
+    //             if (point.x >= x - tolerance && point.x <= x + width + tolerance &&
+    //                 point.y >= y - tolerance && point.y <= y + height + tolerance) {
+    //                 //console.log('Highlighting rect at', x, y);
+    //                 r.setAttribute('fill', '#8FBC8B');
+    //                 r.setAttribute('stroke', 'black');
+    //                 r.setAttribute('stroke-width', '3');
+    //                 r.setAttribute('style', 'fill: limegreen; stroke: black; stroke-width: 3px;');
+    //                 return true;
+    //             }
+    //         }
+
+    //         console.warn('No shape found at', point);
+    //         return false;
+    //     }
+
+
+    //     // Highlight all connected points
+    //     highlightPoint(p1);
+    //     points.forEach(highlightPoint);
+
+    //     // Draw the path as before
+    //     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+    //     let d = `M ${p1.x} ${p1.y}`;
+    //     let currentX = p1.x;
+    //     let currentY = p1.y;
+
+    //     points.forEach(p => {
+    //         const midX = currentX + (p.x - currentX) / 2;
+    //         d += ` L ${midX} ${currentY}`;
+    //         d += ` L ${midX} ${p.y}`;
+    //         d += ` L ${p.x} ${p.y}`;
+
+    //         currentX = p.x;
+    //         currentY = p.y;
+    //     });
+
+    //     path.setAttribute('d', d);
+    //     path.setAttribute('fill', 'none');
+    //     path.setAttribute('stroke', 'limegreen'); // match highlight color
+    //     path.setAttribute('stroke-width', '10');
+    //     path.setAttribute('stroke-linecap', 'round');
+    //     path.setAttribute('stroke-opacity', '0.7');
+    //     path.setAttribute('filter', 'url(#glow)');
+    //     path.classList.add('link-line');
+
+    //     svg.appendChild(path);
+
+
+
+    //     const tbody = document.getElementById('rightBarTableBody');
+
+    //     // Clear all previous rows
+    //     tbody.innerHTML = '';
+
+    //     if (!linkedData || linkedData.length === 0) {
+    //         const tr = document.createElement('tr');
+    //         const td = document.createElement('td');
+    //         td.textContent = 'No data available';
+    //         td.colSpan = 3;
+    //         td.style.textAlign = 'center';
+    //         td.style.padding = '8px';
+    //         td.style.color = '#888';
+    //         tr.appendChild(td);
+    //         tbody.appendChild(tr);
+    //     } else {
+    //         linkedData.forEach((item, index) => {
+    //             const tr = document.createElement('tr');
+
+    //             // Add striped effect
+    //             if (index % 2 === 0) {
+    //                 tr.style.backgroundColor = '#f9f9f9';
+    //             }
+
+    //             const netTd = document.createElement('td');
+    //             netTd.textContent = item.netName || '-';
+    //             netTd.style.padding = '6px';
+    //             tr.appendChild(netTd);
+
+    //             const footprintTd = document.createElement('td');
+    //             footprintTd.textContent = item.footprint || '-';
+    //             footprintTd.style.padding = '6px';
+    //             tr.appendChild(footprintTd);
+
+    //             const pinTd = document.createElement('td');
+    //             pinTd.textContent = item.pin || '-';
+    //             pinTd.style.padding = '6px';
+    //             tr.appendChild(pinTd);
+
+    //             tbody.appendChild(tr);
+    //         });
+    //     }
+
+
+
+
+
+    // }
+
+
+    function highlightSelectedElement(target) {
+
+        // console.log(target);
+        // Remove highlight and blinking animation from previous selection
+        document.querySelectorAll('svg *').forEach(el => {
+            el.style.fill = '';
+            el.style.stroke = '';
+            el.style.strokeWidth = '';
+            el.style.filter = '';
+            el.style.transition = '';
+            el.style.animation = '';
+        });
+
+        // Define blinking animation using CSS keyframes via JavaScript
+        const styleSheetId = 'highlight-blink-style';
+        if (!document.getElementById(styleSheetId)) {
+            const styleSheet = document.createElement('style');
+            styleSheet.id = styleSheetId;
+            styleSheet.type = 'text/css';
+            //             styleSheet.innerHTML = `
+            //     @keyframes blinkGlow {
+            //         0%, 100% {
+            //             stroke: #00bfff;
+            //             filter: drop-shadow(0 0 8px #00bfff);
+            //             stroke-width: 5px;
+            //         }
+            //         50% {
+            //             stroke: #0077cc;
+            //             filter: drop-shadow(0 0 20px #0077cc);
+            //             stroke-width: 10px;
+            //         }
+            //     }
+            // `;
+            document.head.appendChild(styleSheet);
+        }
+
+        // Apply blinking animation and static styles
+        target.style.stroke = '#00bfff'; // bright cyan-blue
+        target.style.strokeWidth = '20px'; // thick stroke
+        target.style.filter = 'drop-shadow(0 0 8px #00bfff)'; // glowing effect
+        target.style.transition = 'stroke 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease';
+
+        // Apply the blinking animation (2 seconds infinite)
+        target.style.animation = 'blinkGlow 2s infinite';
+    }
+
+
+    function setupComponents(components, svg) {
+        // const svgContainer = document.getElementById('svg-container');
+        // const svgElement = svgContainer.querySelector('svg');
+
+        const svgElement = svg;
+
+        // Tooltip setup
+        const tooltip = document.createElement('div');
+        Object.assign(tooltip.style, {
+            position: 'absolute',
+            padding: '10px 16px',
+            background: 'rgba(23, 177, 105, 0.85)',
+            color: '#fff',
+            borderRadius: '10px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+            pointerEvents: 'none',
+            fontSize: '14px',
+            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+            whiteSpace: 'normal',
+            lineHeight: '1.5',
+            zIndex: 1000,
+            display: 'none',
+            textAlign: 'center',
+            width: '260px',
+            maxWidth: '420px',
+            transition: 'opacity 0.2s ease, transform 0.2s ease'
+        });
+        document.body.appendChild(tooltip);
+
+        const compMap = new Map();
+        const tooltipCache = new Map();
+        components.forEach(comp => {
+            compMap.set(comp.component, comp);
+        });
+
+        const BATCH_SIZE = 300;
+        let currentIndex = 0;
+
+        function renderBatch() {
+            const frag = document.createDocumentFragment();
+
+            for (let i = 0; i < BATCH_SIZE && currentIndex < components.length; i++, currentIndex++) {
+                const comp = components[currentIndex];
+                const coords = parseComponentCoordinates(comp.component);
+                if (!coords) continue;
+
+                const {
+                    x,
+                    y,
+                    width,
+                    height
+                } = coords;
+                const centerX = x + width / 2;
+                const centerY = y + height / 2; // ✅ FIXED
+
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("x", x);
+                rect.setAttribute("y", y);
+                rect.setAttribute("width", width);
+                rect.setAttribute("height", height);
+                rect.setAttribute("fill", "transparent");
+                rect.setAttribute("rx", 10);
+                rect.style.cursor = "pointer";
+                rect.dataset.componentId = comp.component;
+                frag.appendChild(rect);
+
+                // const tick = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                // tick.setAttribute("x", centerX);
+                // tick.setAttribute("y", startY);
+                // tick.setAttribute("fill", "black");
+                // tick.setAttribute("text-anchor", "middle");
+                // tick.setAttribute("font-size", "12");
+                // tick.style.pointerEvents = "none";
+
+                // [comp.footprint, comp.netName, comp.diodeValue].forEach((line, index) => {
+                //     const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+                //     tspan.setAttribute("x", centerX);
+                //     tspan.setAttribute("dy", index === 0 ? "0" : "1.2em");
+                //     tspan.textContent = line;
+                //     tick.appendChild(tspan);
+                // });
+
+                // frag.appendChild(tick);
+
+                const tick = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                tick.setAttribute("x", centerX);
+                tick.setAttribute("y", centerY);
+                tick.setAttribute("fill", "black");
+                tick.setAttribute("text-anchor", "middle");
+                tick.setAttribute("dominant-baseline", "middle");
+                tick.setAttribute("xml:space", "preserve");
+
+                // Prevent user from selecting or interacting with the text
+                tick.style.pointerEvents = "none";
+                tick.style.userSelect = "none";
+                tick.style.webkitUserSelect = "none";
+                tick.style.mozUserSelect = "none";
+                tick.style.msUserSelect = "none";
+
+                // Calculate optimal font size based on rect size and text length
+                const lines = [comp.netName].filter(Boolean);
+                const textLength = Math.max(...lines.map(line => line.length));
+                let fontSize = Math.min(width, height) * 0.1;
+                const estimatedCharWidth = fontSize * 0.6;
+                const estimatedTextWidth = textLength * estimatedCharWidth;
+                const maxWidth = width * 0.9;
+
+                if (estimatedTextWidth > maxWidth) {
+                    fontSize = maxWidth / (textLength * 0.4);
+                }
+                tick.setAttribute("font-size", fontSize);
+
+                // Add lines using tspans for better control
+                const lineHeight = fontSize * 1.2;
+                const totalHeight = lines.length * lineHeight;
+                const startYOffset = -((lines.length - 1) / 2) * lineHeight;
+
+                lines.forEach((line, index) => {
+                    const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+                    tspan.setAttribute("x", centerX);
+                    tspan.setAttribute("dy", index === 0 ? startYOffset : lineHeight);
+                    tspan.textContent = line;
+                    tick.appendChild(tspan);
+                });
+
+                frag.appendChild(tick);
+
+                // Cache tooltip content ahead of time (optional but boosts hover speed)
+                tooltipCache.set(comp.component, `
+                <div style="font-weight: 600; margin-bottom: 6px;">Component: ${comp.name}</div>
+                <div><strong>Net Name:</strong> ${comp.netName}</div>
+                <div><strong>Footprint:</strong> ${comp.footprint}</div>
+                <div><strong>Pin Number:</strong> ${comp.pinNumber}</div>
+                <div><strong>Comment:</strong> ${comp.comment}</div>
+                <div><strong>Diode Value:</strong> ${comp.diodeValue}</div>
+                <div><strong>Capacitor Value:</strong> ${comp.capacitorValue}</div>
+                <div><strong>Voltage Value:</strong> ${comp.voltageValue}</div>
+                <div><strong>Ohm Value:</strong> ${comp.ohmValue}</div>
+            `);
+            }
+
+            svgElement.appendChild(frag);
+
+            if (currentIndex < components.length) {
+                requestIdleCallback(renderBatch);
+            }
+        }
+
+        renderBatch();
+
+        // Throttle mousemove updates
+        let lastMove = 0;
+        svgElement.addEventListener('mousemove', (e) => {
+            const now = performance.now();
+            if (now - lastMove > 16) { // ~60fps
+                tooltip.style.left = e.pageX + 10 + 'px';
+                tooltip.style.top = e.pageY + 10 + 'px';
+                lastMove = now;
+            }
+        });
+
+        // Tooltip hover (delegated)
+        svgElement.addEventListener('mouseover', (e) => {
+            const rect = e.target.closest('rect[data-component-id]');
+            if (!rect) return;
+
+            const compId = rect.dataset.componentId;
+            const html = tooltipCache.get(compId);
+            if (!html) return;
+
+            tooltip.innerHTML = html;
+            tooltip.style.display = 'block';
+
+            rect.addEventListener('mouseout', () => {
+                tooltip.style.display = 'none';
+            }, {
+                once: true
+            });
+        });
+    }
+
+
+
+
+
+    // function setupComponents(components, svg) {
+    //     //console.log(components);
+
+    //     // const svgContainer = document.getElementById('svg-container');
+    //     // const svgElement = svgContainer.querySelector('svg');
+
+    //     const svgElement = svg;
+    //     console.log(svgElement);
+
+
+    //     // ✅ Create one tooltip to reuse
+    //     const tooltip = document.createElement('div');
+    //     tooltip.style.position = 'absolute';
+    //     tooltip.style.padding = '10px 16px';
+    //     tooltip.style.background = 'rgba(23, 177, 105, 0.85)'; // Semi-transparent green
+    //     tooltip.style.color = '#ffffff'; // White text
+    //     tooltip.style.borderRadius = '10px';
+    //     tooltip.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.25)'; // Subtle shadow for depth
+    //     tooltip.style.pointerEvents = 'none';
+    //     tooltip.style.fontSize = '14px';
+    //     tooltip.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+    //     tooltip.style.whiteSpace = 'normal'; // Allows text wrapping
+    //     tooltip.style.lineHeight = '1.5';
+    //     tooltip.style.zIndex = 1000;
+    //     tooltip.style.display = 'none';
+    //     tooltip.style.textAlign = 'center';
+    //     tooltip.style.width = '260px';
+    //     tooltip.style.maxWidth = '420px';
+    //     tooltip.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+
+    //     document.body.appendChild(tooltip);
+
+
+
+    //     const fixedBox = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+
+
+    //     fixedBox.addEventListener('mouseenter', () => {
+    //         tooltip.textContent = `Fixed green box at (${centerX}, ${centerY})`;
+    //         tooltip.style.display = 'block';
+    //     });
+    //     fixedBox.addEventListener('mousemove', (e) => {
+    //         tooltip.style.left = e.pageX + 10 + 'px';
+    //         tooltip.style.top = e.pageY + 10 + 'px';
+    //     });
+    //     fixedBox.addEventListener('mouseleave', () => {
+    //         tooltip.style.display = 'none';
+    //     });
+
+    //     svgElement.appendChild(fixedBox);
+
+    //     // ✅ Create rectangles for each dynamic component
+    //     components.forEach((comp, index) => {
+    //         const coords = parseComponentCoordinates(comp.component);
+    //         if (!coords) return;
+
+    //         const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+
+    //         rect.setAttribute("x", coords.x);
+    //         rect.setAttribute("y", coords.y);
+    //         rect.setAttribute("width", coords.width);
+    //         rect.setAttribute("height", coords.height);
+    //         rect.setAttribute("fill", "transparent"); // transparent fill
+    //         rect.style.cursor = "pointer";
+    //         rect.setAttribute("rx", 10);
+    //         //rect.setAttribute("stroke", "white");
+    //         //rect.setAttribute("stroke-width", );
+
+    //         // const tick = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    //         // // tick.textContent = "✓";
+    //         // tick.textContent = "SCG1172CFS";
+    //         // tick.setAttribute("fill", "black");
+    //         // tick.setAttribute("font-size", Math.min(coords.width, coords.height) *
+    //         //     0.2); // scale font size
+
+    //         // tick.style.pointerEvents = "none"; // so clicking tick goes to rect underneath
+
+    //         // // Center the tick inside the rect
+    //         // const centerX = coords.x + coords.width / 2;
+    //         // const centerY = coords.y + coords.height / 2;
+
+    //         // tick.setAttribute("x", centerX);
+    //         // tick.setAttribute("y", centerY);
+    //         // tick.setAttribute("dominant-baseline", "middle");
+    //         // tick.setAttribute("text-anchor", "middle");
+
+
+    //         //const tickText = "SCG1172C8737837FS";
+
+    //         // Create SVG <text> element
+    //         const tick = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    //         tick.setAttribute("fill", "black");
+    //         tick.setAttribute("text-anchor", "middle");
+    //         // Remove dominant-baseline to start from top
+    //         tick.style.pointerEvents = "none";
+
+    //         // Calculate center X
+    //         const centerX = coords.x + coords.width / 2;
+    //         // Top Y, adjusted to move the first line up by one line-height
+    //         let fontSize = Math.min(coords.width, coords.height) * 0.1;
+    //         const startY = coords.y + coords.height / 2 - fontSize; // Adjust to start from top
+
+    //         tick.setAttribute("x", centerX);
+    //         tick.setAttribute("y", startY);
+    //         tick.setAttribute("font-size", fontSize);
+
+    //         // Create tspans for each line, top to bottom
+    //         const lines = [comp.footprint, comp.netName, comp.diodeValue];
+    //         lines.forEach((line, index) => {
+    //             const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+    //             tspan.setAttribute("x", centerX);
+    //             tspan.setAttribute("dy", index === 0 ? "0" :
+    //                 `${fontSize * 1.2}`); // Line spacing
+    //             tspan.textContent = line;
+    //             tick.appendChild(tspan);
+    //         });
+
+    //         svgElement.appendChild(tick);
+
+
+    //         // Wait for the browser to render before measuring
+    //         requestAnimationFrame(() => {
+    //             let bbox = tick.getBBox();
+
+    //             while (bbox.width > coords.width - 4 && fontSize > 5) {
+    //                 fontSize -= 1;
+    //                 tick.setAttribute("font-size", fontSize);
+    //                 bbox = tick.getBBox(); // Update after change
+    //             }
+    //         });
+
+
+
+
+
+    //         rect.addEventListener('mouseenter', () => {
+    //             tooltip.innerHTML = `
+    //     <div style="font-weight: 600; margin-bottom: 6px;">Component:${comp.name}</div>
+    //     <div><strong>Net Name:</strong> ${comp.netName}</div>
+    //     <div><strong>Footprint:</strong> ${comp.footprint}</div>
+    //     <div><strong>Pin Number:</strong> ${comp.pinNumber}</div>
+    //     <div><strong>Comment:</strong> ${comp.comment}</div>
+    //     <div><strong>Diode Value:</strong> ${comp.diodeValue}</div>
+    //     <div><strong>Capacitor Value:</strong> ${comp.capacitorValue}</div>
+    //     <div><strong>Voltage Value:</strong> ${comp.voltageValue}</div>
+    //     <div><strong>Ohm Value:</strong> ${comp.ohmValue}</div>
+    // `;
+    //             tooltip.style.display = 'block';
+    //         });
+
+
+    //         rect.addEventListener('mousemove', (e) => {
+    //             tooltip.style.left = e.pageX + 10 + 'px';
+    //             tooltip.style.top = e.pageY + 10 + 'px';
+    //         });
+    //         rect.addEventListener('mouseleave', () => {
+    //             tooltip.style.display = 'none';
+    //         });
+
+    //         svgElement.appendChild(rect);
+    //         // svgElement.appendChild(tick);
+    //     });
+    // }
+
+
+
+
+    function parseComponentCoordinates(componentStr) {
+        const regex = /x(\d+)_y(\d+)_w(\d+)_h(\d+)/;
+        const match = componentStr.match(regex);
+        if (!match) return null;
+        return {
+            x: parseInt(match[1], 10),
+            y: parseInt(match[2], 10),
+            width: parseInt(match[3], 10),
+            height: parseInt(match[4], 10),
+        };
+    }
+
+
+
+    // Load categories on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        const spinner = document.getElementById('loadingSpinner');
+        if (spinner) spinner.style.display = 'block'; // Show spinner initially
+
+        // Start loading both simultaneously, but handle their results separately
+        const loadCats = loadCategories().then(() => {
+            console.log('Categories loaded');
+        }).catch(err => console.error('Categories failed:', err));
+
+        const loadBits = loadBitmaps().then(() => {
+            console.log('Bitmaps loaded');
+        }).catch(err => console.error('Bitmaps failed:', err));
+
+        // Wait for both to finish, then hide spinner
+        Promise.all([loadCats, loadBits]).finally(() => {
+            if (spinner) spinner.style.display = 'none';
+        });
+    });
+
+
+
+
+</script>
+
+
+
+<script>
+    // document.addEventListener('keydown', function (event) {
+    //     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    //     const isSaveShortcut = (isMac && event.metaKey && event.key === 's') ||
+    //         (!isMac && event.ctrlKey && event.key === 's');
+
+    //     if (isSaveShortcut) {
+    //         event.preventDefault();
+    //         event.stopPropagation();
+    //         alert("Save functionality is disabled.");
+    //         return false;
+    //     }
+    // });
+</script>
+
+</html>

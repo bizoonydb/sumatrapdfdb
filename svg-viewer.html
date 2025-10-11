@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Viewer</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        #svg-container {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div
+        style="position: fixed; top: 10px; left: 10px; z-index: 9999; background: white; padding: 6px 12px; border-radius: 6px;">
+        <label style="font-size: 14px; font-weight: 600;">
+            <input type="checkbox" id="enable-title-checkbox" style="margin-right: 6px;" checked />
+            Show Titles
+        </label>
+    </div>
+
+    <div id="svg-container">
+
+        <p>CARREGANDO...</p>
+    </div>
+
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const svgContainer = document.getElementById('svg-container');
+            if (!svgContainer) {
+                console.error("Element with id 'svg-container' not found.");
+                return;
+            }
+            let scale = 1;
+            let translate = {
+                x: 0,
+                y: 0
+            };
+            let isPanning = false;
+            let panStart = {
+                x: 0,
+                y: 0
+            };
+            let mouseMoved = false;
+
+            function updateTransform() {
+                svgContainer.style.transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
+                svgContainer.style.transformOrigin = '0 0';
+            }
+
+            function handleWheel(e) {
+                e.preventDefault();
+                const zoomFactor = 0.50;
+                const delta = e.deltaY > 0 ? 1 - zoomFactor : 1 + zoomFactor;
+
+                const proposedScale = scale * delta;
+                const minScale = 1;
+                const maxScale = 160;
+
+                
+                const newScale = Math.min(Math.max(proposedScale, minScale), maxScale);
+
+             
+                if (newScale === scale) return;
+
+                const rect = svgContainer.getBoundingClientRect();
+                const offsetX = e.clientX - rect.left;
+                const offsetY = e.clientY - rect.top;
+
+                translate.x -= offsetX * (newScale - scale) / scale;
+                translate.y -= offsetY * (newScale - scale) / scale;
+
+                scale = newScale;
+                updateTransform();
+            }
+
+
+            function handleMouseDown(e) {
+                isPanning = true;
+                panStart = {
+                    x: e.clientX,
+                    y: e.clientY
+                };
+                mouseMoved = false;
+            }
+
+            function handleMouseUp(e) {
+                isPanning = false;
+                if (!mouseMoved) {
+                    ;
+                }
+            }
+
+            function handleMouseMove(e) {
+                if (!isPanning) return;
+
+                const dx = e.clientX - panStart.x;
+                const dy = e.clientY - panStart.y;
+
+                if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+                    mouseMoved = true;
+                }
+
+                const dampening = 1;
+                translate.x += dx * dampening;
+                translate.y += dy * dampening;
+
+                panStart = {
+                    x: e.clientX,
+                    y: e.clientY
+                };
+                updateTransform();
+            }
+
+
+
+            svgContainer.addEventListener('wheel', handleWheel, {
+                passive: false
+            });
+            svgContainer.addEventListener('mousedown', handleMouseDown);
+            window.addEventListener('mouseup', handleMouseUp);
+            window.addEventListener('mousemove', handleMouseMove);
+
+
+         
+
+
+            function setupComponentsText(allComponents) {
+
+
+                const svgContainer = document.getElementById('svg-container');
+                const svgElement1 = svgContainer.querySelector('svg');
+
+                // ✅ Create rectangles for each dynamic component
+                allComponents.forEach((comp1, index) => {
+                    const coords = parseComponentCoordinates(comp1.component_location);
+                    if (!coords) return;
+
+                    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+
+                    rect.setAttribute("x", coords.x);
+                    rect.setAttribute("y", coords.y);
+                    rect.setAttribute("width", coords.width);
+                    rect.setAttribute("height", coords.height);
+                    rect.setAttribute("fill", "transparent"); // transparent fill
+                    rect.style.cursor = "pointer";
+                    rect.setAttribute("rx", 10);
+                    rect.setAttribute("stroke", "white");
+                    rect.setAttribute("stroke-width", 2);
+                    rect.setAttribute("fill", "none");
+
+                    const tick = document.createElementNS("http://www.w3.org/2000/svg", "text");
+
+                    // Optionally trim text if it’s too long (optional step)
+                    function trimTextToFit(text, maxChars) {
+                        return text.length > maxChars ? text.substring(0, maxChars - 3) + "..." : text;
+                    }
+                    const maxChars = Math.floor(coords.width / 8); // tweak divisor as needed
+                    const textToDisplay = trimTextToFit(comp1.component_name, maxChars);
+
+                    tick.textContent = textToDisplay;
+                    tick.setAttribute("fill", "rgba(255, 255, 255, 0.6)");
+                    tick.setAttribute("font-weight", "bold");
+                    tick.style.pointerEvents = "none"; // already included
+                    tick.style.userSelect = "none";
+                    tick.style.webkitUserSelect = "none";
+                    tick.style.mozUserSelect = "none";
+                    tick.style.msUserSelect = "none";
+                    //tick.style.pointerEvents = "none"; // so clicking tick goes to rect underneath
+
+                    // Estimate font size dynamically based on width and text length
+                    const textLength = textToDisplay.length;
+                    const maxWidth = coords.width * 0.9;
+                    let fontSize = Math.min(coords.width, coords.height) * 0.3;
+                    const estimatedCharWidth = fontSize * 0.6;
+                    const estimatedTextWidth = textLength * estimatedCharWidth;
+
+                    if (estimatedTextWidth > maxWidth) {
+                        fontSize = maxWidth / (textLength * 0.6);
+                    }
+                    tick.setAttribute("font-size", fontSize);
+
+                    // Center the tick inside the rect
+                    const centerX = coords.x + coords.width / 2;
+                    const centerY = coords.y + coords.height / 2;
+                    tick.setAttribute("text-anchor", "middle");
+                    tick.setAttribute("dominant-baseline", "middle");
+
+                    if (coords.height > coords.width) {
+                        // Box is vertical: rotate text 90 degrees
+                        tick.setAttribute("transform", `rotate(90, ${centerX}, ${centerY})`);
+                        tick.setAttribute("x", centerX);
+                        tick.setAttribute("y", centerY);
+                    } else {
+                        // Normal horizontal text
+                        tick.setAttribute("x", centerX);
+                        tick.setAttribute("y", centerY);
+                    }
+
+
+                    svgElement1.appendChild(rect);
+                    svgElement1.appendChild(tick);
+                });
+            }
+
+
+
+
+            function highlightSelectedElement(target) {
+                // Clear previous highlights
+                document.querySelectorAll('#svg-container svg *').forEach(el => {
+                    el.style.stroke = '';
+                    el.style.strokeWidth = '';
+                    el.style.fill = '';
+                    el.style.filter = '';
+                });
+
+                // Apply inline highlight styles
+                target.style.stroke = '#00bfff';
+                target.style.strokeWidth = '8px';
+                //target.style.fill = 'yellow';
+                target.style.filter = 'drop-shadow(0 0 4px #00bfff)';
+            }
+
+
+
+
+
+
+
+            function parseComponentCoordinates(componentStr) {
+                const regex = /x(\d+)_y(\d+)_w(\d+)_h(\d+)/;
+                const match = componentStr.match(regex);
+                if (!match) return null;
+                return {
+                    x: parseInt(match[1], 10),
+                    y: parseInt(match[2], 10),
+                    width: parseInt(match[3], 10),
+                    height: parseInt(match[4], 10),
+                };
+            }
+
+            function isClose(a, b, tolerance = 0.1) {
+                return Math.abs(a - b) < tolerance;
+            }
+
+
+
+
+
+
+            function setupComponents(components) {
+
+                //console.log(components);
+                const svgContainer = document.getElementById('svg-container');
+                const svgElement = svgContainer.querySelector('svg');
+
+                // Tooltip setup
+                const tooltip = document.createElement('div');
+                Object.assign(tooltip.style, {
+                    position: 'absolute',
+                    padding: '10px 16px',
+                    background: 'rgba(23, 177, 105, 0.85)',
+                    color: '#fff',
+                   
+                    pointerEvents: 'none',
+                    fontSize: '14px',
+                    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                    whiteSpace: 'normal',
+                    lineHeight: '1.5',
+                    zIndex: 1000,
+                    display: 'none',
+                    textAlign: 'center',
+                    width: '260px',
+                    maxWidth: '420px',
+                    //transition: 'opacity 0.2s ease, transform 0.2s ease'
+                });
+                document.body.appendChild(tooltip);
+
+                const compMap = new Map();
+                const tooltipCache = new Map();
+                components.forEach(comp => {
+                    compMap.set(comp.component, comp);
+                });
+
+                const BATCH_SIZE = 300;
+                let currentIndex = 0;
+
+                function renderBatch() {
+                    const frag = document.createDocumentFragment();
+
+                    for (let i = 0; i < BATCH_SIZE && currentIndex < components.length; i++, currentIndex++) {
+                        const comp = components[currentIndex];
+                        const coords = parseComponentCoordinates(comp.component);
+                        if (!coords) continue;
+
+             
+
+                        const {
+                            x,
+                            y,
+                            width,
+                            height
+                        } = coords;
+                        const centerX = x + width / 2;
+                        const centerY = y + height / 2; // ✅ FIXED
+
+                        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        rect.setAttribute("x", x);
+                        rect.setAttribute("y", y);
+                        rect.setAttribute("width", width);
+                        rect.setAttribute("height", height);
+                        rect.setAttribute("fill", "transparent");
+                        rect.setAttribute("rx", 10);
+                        rect.style.cursor = "pointer";
+                        rect.dataset.componentId = comp.component;
+                        frag.appendChild(rect);
+
+
+
+
+                        const checkbox = document.getElementById('enable-title-checkbox');
+                        const showTitles = checkbox && checkbox.checked;
+
+                        const tick = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        tick.classList.add('title-element'); // ✅ Add class for toggling
+                        tick.setAttribute("x", centerX);
+                        tick.setAttribute("y", centerY);
+                        tick.setAttribute("fill", "black");
+                        tick.setAttribute("text-anchor", "middle");
+                        tick.setAttribute("dominant-baseline", "middle");
+                        tick.setAttribute("xml:space", "preserve");
+
+                        // Prevent user from selecting or interacting with the text
+                        tick.style.pointerEvents = "none";
+                        tick.style.userSelect = "none";
+                        tick.style.webkitUserSelect = "none";
+                        tick.style.mozUserSelect = "none";
+                        tick.style.msUserSelect = "none";
+
+                        // Calculate optimal font size based on rect size and text length
+                        const lines = [comp.netName].filter(Boolean);
+                        const textLength = Math.max(...lines.map(line => line.length));
+                        let fontSize = Math.min(width, height) * 0.1;
+                        const estimatedCharWidth = fontSize * 0.6;
+                        const estimatedTextWidth = textLength * estimatedCharWidth;
+                        const maxWidth = width * 0.9;
+
+                        if (estimatedTextWidth > maxWidth) {
+                            fontSize = maxWidth / (textLength * 0.4);
+                        }
+                        tick.setAttribute("font-size", fontSize);
+
+                        // Add lines using tspans for better control
+                        const lineHeight = fontSize * 1.2;
+                        const totalHeight = lines.length * lineHeight;
+                        const startYOffset = -((lines.length - 1) / 2) * lineHeight;
+
+                        lines.forEach((line, index) => {
+                            const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+                            tspan.setAttribute("x", centerX);
+                            tspan.setAttribute("dy", index === 0 ? startYOffset : lineHeight);
+                            tspan.textContent = line;
+                            tick.appendChild(tspan);
+                        });
+
+                        if (showTitles) {
+                            frag.appendChild(tick); // ✅ Only append if checkbox is checked
+                        }
+
+                        // Cache tooltip content ahead of time (optional but boosts hover speed)
+                        tooltipCache.set(comp.component, `
+                        <div style="font-weight: 600; margin-bottom: 6px;">Component: ${comp.name}</div>
+                        <div><strong>Net Name:</strong> ${comp.netName}</div>
+                        <div><strong>Footprint:</strong> ${comp.footprint}</div>
+                        <div><strong>Pin Number:</strong> ${comp.pinNumber}</div>
+                        <div><strong>Comment:</strong> ${comp.comment}</div>
+                        <div><strong>Diode Value:</strong> ${comp.diodeValue}</div>
+                        <div><strong>Capacitor Value:</strong> ${comp.capacitorValue}</div>
+                        <div><strong>Voltage Value:</strong> ${comp.voltageValue}</div>
+                        <div><strong>Ohm Value:</strong> ${comp.ohmValue}</div>
+                    `);
+                    }
+
+                    svgElement.appendChild(frag);
+
+                    if (currentIndex < components.length) {
+                        requestIdleCallback(renderBatch);
+                    }
+                }
+
+                renderBatch();
+
+                // Throttle mousemove updates
+                let lastMove = 0;
+                svgElement.addEventListener('mousemove', (e) => {
+                    const now = performance.now();
+                    if (now - lastMove > 16) { // ~60fps
+                        tooltip.style.left = e.pageX + 10 + 'px';
+                        tooltip.style.top = e.pageY + 10 + 'px';
+                        lastMove = now;
+                    }
+                });
+
+                // Tooltip hover (delegated)
+                svgElement.addEventListener('mouseover', (e) => {
+                    const rect = e.target.closest('rect[data-component-id]');
+                    if (!rect) return;
+
+                    const compId = rect.dataset.componentId;
+                    const html = tooltipCache.get(compId);
+                    if (!html) return;
+
+                    tooltip.innerHTML = html;
+                    tooltip.style.display = 'block';
+
+                    rect.addEventListener('mouseout', () => {
+                        tooltip.style.display = 'none';
+                    }, {
+                        once: true
+                    });
+                });
+            }
+
+
+            async function fetchAndLoadSVGWithMetadata(svgUrl, subcatid) {
+                try {
+                    console.log(subcatid);
+                    // Step 1: Fetch the SVG file
+                    const svgResponse = await fetch(svgUrl);
+                    const svgContent = await svgResponse.text();
+
+                    // Step 2: Fetch SVG-related metadata from your API
+                    const metadataResponse = await fetch(`https://bitmap.skillbypm.com/api/svg-details/${subcatid}`);
+                    const metadata = await metadataResponse.json();
+                    //console.log(metadata);
+                    if (metadata.success) {
+                        const componentData = metadata.data.componentData;
+                        const allComponents = metadata.data.components;
+
+                        console.log(componentData);
+                        // const componentLinks = metadata.data.componentlinks; // use if needed
+
+                        // Step 3: Load SVG into container and apply metadata
+                        loadSVG(svgContent, 'svg-container', componentData, allComponents);
+                    } else {
+                        console.error("Metadata fetch failed:", metadata.message || "No message");
+                    }
+
+                } catch (error) {
+                    console.error("Error loading SVG or metadata:", error);
+                }
+            }
+
+
+
+            const params = new URLSearchParams(window.location.search);
+            const svgUrl = params.get('file');  // svgUrl from parent
+            const tabId = params.get('tabId');  // tabId from parent
+
+            console.log("Loaded viewer with:", { svgUrl, tabId });
+
+            if (svgUrl && tabId) {
+                // Example fetch call using svgUrl and tabId
+                fetchAndLoadSVGWithMetadata(svgUrl, tabId);
+            } else {
+                document.getElementById('svg-container').innerText = "Missing file or tabId.";
+            }
+
+
+
+            function generateComponentIdFromCoords(target) {
+                const bbox = target.getBBox();
+                // Example ID: "x10_y20_w100_h50"
+                return `x${Math.round(bbox.x)}_y${Math.round(bbox.y)}_w${Math.round(bbox.width)}_h${Math.round(bbox.height)}`;
+            }
+
+            async function loadSVG(svgContent, containerId, componentData, allComponents) {
+                try {
+                    const container = document.getElementById(containerId);
+                    container.innerHTML = svgContent; // inject raw SVG markup
+
+                    const svg = container.querySelector('svg');
+                    if (!svg) {
+                        alert('SVG element not found in the content.');
+                        return;
+                    }
+
+                    
+
+                    setupComponentsText(allComponents);
+
+
+                    const checkbox = document.getElementById('enable-title-checkbox');
+
+                    checkbox.addEventListener('change', () => {
+                        const svg = document.querySelector('#svg-container svg');
+                        if (!svg) return;
+
+                        if (checkbox.checked) {
+                            setupComponents(componentData);
+                        } else {
+                            svg.querySelectorAll('.title-element').forEach(el => el.remove());
+                        }
+                    });
+
+                    // ✅ Trigger on load if already checked
+                    if (checkbox.checked) {
+                        const event = new Event('change');
+                        checkbox.dispatchEvent(event);
+                    }
+
+
+                    let isDragging = false;
+
+                    document.addEventListener('mousedown', () => {
+                        isDragging = false;
+                    });
+
+                    document.addEventListener('mousemove', (e) => {
+                        if (e.buttons === 1) {
+                            isDragging = true;
+                        }
+                    });
+
+                    document.addEventListener('mousemove', () => {
+                        isDragging = true;
+                    });
+
+                    document.addEventListener('mouseup', () => {
+                        setTimeout(() => {
+                            isDragging = false;
+                        }, 0);
+                    });
+
+                    svg.addEventListener('click', (event) => {
+                        if (isDragging) return;
+                        const target = event.target;
+
+                        console.log(target);
+                        svg.querySelectorAll('.highlighted-overlay').forEach(el => el.remove());
+
+                        if (target === svg) return;
+
+                        svg.querySelectorAll('.link-line').forEach(line => line.remove());
+                        highlightSelectedElement(target);
+
+                        const componentId = generateComponentIdFromCoords(target);
+                        const main = parseComponentCoordinates(componentId);
+
+                        if (!main) return;
+
+                        handleComponentClick(componentId, componentData);
+                    });
+
+                } catch (error) {
+                    alert('Error loading SVG: ' + error.message);
+                }
+            }
+
+
+
+
+
+
+            function handleComponentClick(componentId, componentsList) {
+                const clickedComponent = componentsList.find(c => c.component === componentId);
+                if (!clickedComponent) return;
+
+                //console.log(clickedComponent);
+                const netName = clickedComponent.netName; // or clickedComponent.netname if exists
+
+                
+                const relatedComponents = componentsList.filter(c => c.netName === netName);
+
+               
+                const points = relatedComponents.map(c => {
+                    const [xPart, yPart] = c.component.split('_');
+                    const x = parseInt(xPart.replace('x', ''));
+                    const y = parseInt(yPart.replace('y', ''));
+                    return {
+                        x,
+                        y,
+                        target: c.target || ''
+                    };
+                });
+
+                drawConnectionLine(points);
+
+              
+            }
+
+
+
+
+
+
+
+
+            function drawConnectionLine(points) {
+
+                console.log(points);
+                if (!points || points.length < 2) {
+                    console.warn('Not enough points to draw a connection.');
+                    return;
+                }
+
+                const svg = document.querySelector('#svg-container svg');
+                if (!svg) {
+                    console.error('SVG element not found inside #svg-container');
+                    return;
+                }
+
+                // Cleanup previous highlights and lines
+                svg.querySelectorAll('.link-line').forEach(line => line.remove());
+                svg.querySelectorAll('.highlighted-overlay').forEach(el => el.remove());
+
+                const tolerance = 2;
+                const centers = [];
+
+                points.forEach(p => {
+                    if (!p.target) return;
+
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = p.target.trim();
+                    const targetEl = tempDiv.firstChild;
+                    if (!targetEl) return;
+
+                    const tagName = targetEl.tagName.toLowerCase();
+
+                    if (tagName === 'rect') {
+                        const tx = parseFloat(targetEl.getAttribute('x'));
+                        const ty = parseFloat(targetEl.getAttribute('y'));
+                        const tw = parseFloat(targetEl.getAttribute('width'));
+                        const th = parseFloat(targetEl.getAttribute('height'));
+
+                        if (!isNaN(tx) && !isNaN(ty) && !isNaN(tw) && !isNaN(th)) {
+                            const center = {
+                                x: tx + tw / 2,
+                                y: ty + th / 2
+                            };
+                            centers.push(center);
+
+                            const match = Array.from(svg.querySelectorAll('rect')).find(r => {
+                                const rx = parseFloat(r.getAttribute('x'));
+                                const ry = parseFloat(r.getAttribute('y'));
+                                const rw = parseFloat(r.getAttribute('width'));
+                                const rh = parseFloat(r.getAttribute('height'));
+                                return (
+                                    Math.abs(rx - tx) < tolerance &&
+                                    Math.abs(ry - ty) < tolerance &&
+                                    Math.abs(rw - tw) < tolerance &&
+                                    Math.abs(rh - th) < tolerance
+                                );
+                            });
+
+                            if (match) {
+                                const overlay = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                                overlay.setAttribute("x", tx);
+                                overlay.setAttribute("y", ty);
+                                overlay.setAttribute("width", tw);
+                                overlay.setAttribute("height", th);
+                                overlay.setAttribute("rx", 8);
+                                overlay.setAttribute("fill", "rgba(0, 128, 0, 0.6)");
+                                overlay.setAttribute("stroke", "#00c853");
+                                overlay.setAttribute("stroke-width", "2");
+                                overlay.setAttribute("pointer-events", "none");
+                                overlay.classList.add("highlighted-overlay");
+                                svg.appendChild(overlay);
+                            }
+                        }
+
+                    } else if (tagName === 'polygon') {
+                        const pointsAttr = targetEl.getAttribute('points');
+                        if (!pointsAttr) return;
+
+                        const points = pointsAttr.trim().split(/\s+/).map(pt => {
+                            const [x, y] = pt.split(',').map(parseFloat);
+                            return {
+                                x,
+                                y
+                            };
+                        }).filter(p => !isNaN(p.x) && !isNaN(p.y));
+
+                        if (points.length > 0) {
+                            // Compute center (average of all points)
+                            const center = {
+                                x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
+                                y: points.reduce((sum, p) => sum + p.y, 0) / points.length
+                            };
+                            centers.push(center);
+
+                            const match = Array.from(svg.querySelectorAll('polygon')).find(p => {
+                                const pPointsAttr = p.getAttribute('points');
+                                if (!pPointsAttr) return false;
+
+                                const pPoints = pPointsAttr.trim().split(/\s+/).map(pt => {
+                                    const [x, y] = pt.split(',').map(parseFloat);
+                                    return {
+                                        x,
+                                        y
+                                    };
+                                });
+
+                                if (pPoints.length !== points.length) return false;
+
+                                for (let i = 0; i < points.length; i++) {
+                                    const dx = Math.abs(points[i].x - pPoints[i].x);
+                                    const dy = Math.abs(points[i].y - pPoints[i].y);
+                                    if (dx > tolerance || dy > tolerance) return false;
+                                }
+
+                                return true;
+                            });
+
+                            if (match) {
+                                const overlay = document.createElementNS("http://www.w3.org/2000/svg",
+                                    "polygon");
+                                overlay.setAttribute("points", points.map(p => `${p.x},${p.y}`).join(' '));
+                                overlay.setAttribute("fill", "rgba(0, 128, 0, 0.6)");
+                                overlay.setAttribute("stroke", "#00c853");
+                                overlay.setAttribute("stroke-width", "2");
+                                overlay.setAttribute("pointer-events", "none");
+                                overlay.classList.add("highlighted-overlay");
+                                svg.appendChild(overlay);
+                            }
+                        }
+                    } else if (tagName === 'circle') {
+                        const cx = parseFloat(targetEl.getAttribute('cx'));
+                        const cy = parseFloat(targetEl.getAttribute('cy'));
+                        const r = parseFloat(targetEl.getAttribute('r'));
+
+                        if (!isNaN(cx) && !isNaN(cy) && !isNaN(r)) {
+                            const center = {
+                                x: cx,
+                                y: cy
+                            };
+                            centers.push(center);
+
+                            const match = Array.from(svg.querySelectorAll('circle')).find(c => {
+                                const ccx = parseFloat(c.getAttribute('cx'));
+                                const ccy = parseFloat(c.getAttribute('cy'));
+                                const cr = parseFloat(c.getAttribute('r'));
+                                return (
+                                    Math.abs(ccx - cx) < tolerance &&
+                                    Math.abs(ccy - cy) < tolerance &&
+                                    Math.abs(cr - r) < tolerance
+                                );
+                            });
+
+                            if (match) {
+                                const overlay = document.createElementNS("http://www.w3.org/2000/svg",
+                                    "circle");
+                                overlay.setAttribute("cx", cx);
+                                overlay.setAttribute("cy", cy);
+                                overlay.setAttribute("r", r);
+                                overlay.setAttribute("fill", "rgba(0, 128, 0, 0.6)");
+                                overlay.setAttribute("stroke", "#00c853");
+                                overlay.setAttribute("stroke-width", "2");
+                                overlay.setAttribute("pointer-events", "none");
+                                overlay.classList.add("highlighted-overlay");
+                                svg.appendChild(overlay);
+                            }
+                        }
+
+                    } else if (tagName === 'ellipse') {
+                        const cx = parseFloat(targetEl.getAttribute('cx'));
+                        const cy = parseFloat(targetEl.getAttribute('cy'));
+                        const rx = parseFloat(targetEl.getAttribute('rx'));
+                        const ry = parseFloat(targetEl.getAttribute('ry'));
+
+                        if (!isNaN(cx) && !isNaN(cy) && !isNaN(rx) && !isNaN(ry)) {
+                            const center = {
+                                x: cx,
+                                y: cy
+                            };
+                            centers.push(center);
+
+                            const match = Array.from(svg.querySelectorAll('ellipse')).find(e => {
+                                const ecx = parseFloat(e.getAttribute('cx'));
+                                const ecy = parseFloat(e.getAttribute('cy'));
+                                const erx = parseFloat(e.getAttribute('rx'));
+                                const ery = parseFloat(e.getAttribute('ry'));
+                                return (
+                                    Math.abs(ecx - cx) < tolerance &&
+                                    Math.abs(ecy - cy) < tolerance &&
+                                    Math.abs(erx - rx) < tolerance &&
+                                    Math.abs(ery - ry) < tolerance
+                                );
+                            });
+
+                            if (match) {
+                                const overlay = document.createElementNS("http://www.w3.org/2000/svg",
+                                    "ellipse");
+                                overlay.setAttribute("cx", cx);
+                                overlay.setAttribute("cy", cy);
+                                overlay.setAttribute("rx", rx);
+                                overlay.setAttribute("ry", ry);
+                                overlay.setAttribute("fill", "rgba(0, 128, 0, 0.6)");
+                                overlay.setAttribute("stroke", "#00c853");
+                                overlay.setAttribute("stroke-width", "2");
+                                overlay.setAttribute("pointer-events", "none");
+                                overlay.classList.add("highlighted-overlay");
+                                svg.appendChild(overlay);
+                            }
+                        }
+                    }
+                });
+
+                console.warn(`Total points: ${points.length}, Valid centers: ${centers.length}`);
+                console.log('Centers:', centers);
+
+                if (centers.length < 2) {
+                    console.warn('Less than 2 usable centers. Cannot draw line.');
+                    return;
+                }
+
+                centers.sort((a, b) => a.x - b.x);
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                let d = `M ${centers[0].x} ${centers[0].y}`;
+                let currentX = centers[0].x;
+                let currentY = centers[0].y;
+
+                for (let i = 1; i < centers.length; i++) {
+                    const target = centers[i];
+                    const midX = (currentX + target.x) / 2;
+
+                    d += ` L ${midX} ${currentY}`;
+                    d += ` L ${midX} ${target.y}`;
+                    d += ` L ${target.x} ${target.y}`;
+
+                    currentX = target.x;
+                    currentY = target.y;
+                }
+
+                path.setAttribute('d', d);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', 'yellow');
+                path.setAttribute('stroke-width', '15');
+                path.setAttribute('stroke-linecap', 'round');
+                path.setAttribute('stroke-opacity', '0.7');
+                path.setAttribute('filter', 'url(#glow)');
+                path.classList.add('link-line');
+
+                svg.appendChild(path);
+            }
+
+
+         
+
+        });
+
+
+    </script>
+
+</body>
+
+</html>

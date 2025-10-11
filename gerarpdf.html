@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Editorpdf db</title>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  color: #ffd900;
+  display: flex;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+}
+
+#editor {
+  width: 250px; /* largura fixa do editor */
+  background: #444141;
+  padding: 20px;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+h2 {
+  text-align: center;
+}
+
+input, button {
+  padding: 8px;
+  border-radius: 5px;
+  margin: 5px 0;
+  border: 1px solid #ff0000;
+}
+
+#titulo, #subtitulo {
+  display: inline-block;
+  padding: 10px;
+  font-weight: bold;
+  text-align: center;
+  border-radius: 8px;
+  outline: none;
+}
+
+#titulo {
+  background: yellow;
+  color: black;
+}
+
+#subtitulo {
+  background: black;
+  color: yellow;
+  border: 2px solid yellow;
+  margin-left: 0px; /* colado no título */
+}
+
+#malhas {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.malha {
+  display: inline-block;
+  padding: 6px 14px;
+  margin: 4px;
+  color: white;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+#pdfViewer {
+  flex: 1; /* ocupa o restante da tela */
+  border: none;
+}
+
+.malha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  margin: 4px;
+  color: white;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  position: relative;
+}
+
+.malha.editing {
+  background: #333 !important;
+}
+
+.malha input[type="text"] {
+  width: 60px;
+  margin-right: 5px;
+  border-radius: 4px;
+  border: none;
+  padding: 2px 4px;
+}
+
+.malha input[type="color"] {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  
+  border: none;
+  cursor: pointer;
+}
+#download {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+#addMalha {
+  background-color: #2898a7;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+#toggleLogo {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #ff9800; /* cor inicial ativo */
+  color: #000;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transition: background 0.3s, color 0.3s;
+  z-index: 9999;
+}
+
+#toggleLogo.active {
+  background-color: #ff9800;
+  color: #000;
+}
+
+#toggleLogo.inactive {
+  background-color: #444141;
+  color: #ffd900;
+}
+
+
+</style>
+</head>
+<body>
+<button id="toggleLogo" class="active">ADICIONAR LOGO</button>
+
+
+<div id="editor">
+  <h2>🧩 DIGITAL BOARD</h2>
+  <input type="file" id="file" accept="application/pdf"><br>
+
+  <div contenteditable="true" id="titulo">DIGITAL BOARD   </div>
+  <div contenteditable="true" id="subtitulo">SCHEMATC</div>
+
+  <div id="malhas"></div>
+  <input type="text" id="nomeMalha" placeholder="Nome da malha">
+  <input type="color" id="corMalha" value="#007bff">
+  <button id="addMalha">ADD MALHA</button>
+  <button id="download">DONWLOAD</button>
+  
+</div>
+<div id="malhas"></div>
+
+<iframe id="pdfViewer" src="viewer.html?file="></iframe>
+
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+<script>
+const { PDFDocument, rgb, StandardFonts } = PDFLib;
+let originalPdfBytes = null;
+let malhas = [];
+
+const iframe = document.getElementById('pdfViewer');
+
+document.getElementById('file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  originalPdfBytes = await file.arrayBuffer();
+
+  // carrega PDF no iframe
+  const url = URL.createObjectURL(file);
+  iframe.src = `viewer.html?file=${encodeURIComponent(url)}`;
+});
+
+document.getElementById('addMalha').addEventListener('click', () => {
+  const nome = document.getElementById('nomeMalha').value.trim();
+  const cor = document.getElementById('corMalha').value;
+  if (!nome) return;
+  malhas.push({ nome, cor });
+  atualizarMalhas();
+  document.getElementById('nomeMalha').value = '';
+});
+
+function atualizarMalhas() {
+  const div = document.getElementById('malhas');
+  div.innerHTML = '';
+  malhas.forEach(m => {
+    const el = document.createElement('div');
+    el.className = 'malha';
+    el.style.background = m.cor;
+    el.textContent = m.nome;
+    div.appendChild(el);
+  });
+}
+let adicionarLogo = true; // começa ativado
+
+
+// --- SALVAR TÍTULO E SUBTÍTULO NO LOCAL STORAGE ---
+document.addEventListener("DOMContentLoaded", () => {
+  const tituloEl = document.getElementById("titulo");
+  const subtituloEl = document.getElementById("subtitulo");
+
+  // restaurar
+  const savedTitulo = localStorage.getItem("savedTitulo");
+  const savedSubtitulo = localStorage.getItem("savedSubtitulo");
+  if (savedTitulo) tituloEl.innerText = savedTitulo;
+  if (savedSubtitulo) subtituloEl.innerText = savedSubtitulo;
+
+  // salvar ao digitar
+  const saveData = () => {
+    localStorage.setItem("savedTitulo", tituloEl.innerText);
+    
+  };
+
+  tituloEl.addEventListener("input", saveData);
+  subtituloEl.addEventListener("input", saveData);
+});
+
+// --- GERAR NOME AUTOMÁTICO DO PDF ---
+function gerarNomePDF() {
+  const titulo = document.getElementById("titulo").innerText.trim() || "sem-titulo";
+  const subtitulo = document.getElementById("subtitulo").innerText.trim() || "sem-subtitulo";
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  return `${subtitulo}-${titulo}-${randomNum}.pdf`;
+}
+
+
+document.getElementById('toggleLogo').addEventListener('click', () => {
+  adicionarLogo = !adicionarLogo;
+  const btn = document.getElementById('toggleLogo');
+  btn.classList.toggle('active', adicionarLogo);
+  btn.classList.toggle('inactive', !adicionarLogo);
+});
+
+
+
+
+document.getElementById('download').addEventListener('click', async () => {
+  if (!originalPdfBytes) { alert("Carregue um PDF"); return; }
+
+  const titulo = document.getElementById('titulo').innerText;
+  const subtitulo = document.getElementById('subtitulo').innerText;
+
+  const pdfDoc = await PDFDocument.load(originalPdfBytes);
+  const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const pages = pdfDoc.getPages();
+
+// --- ADICIONAR LOGO SE ATIVADO ---
+if (adicionarLogo) {
+  const logoUrl = "https://bizoonydb.github.io/PDFJS/db/logontransparente.png";
+  const logoImageBytes = await fetch(logoUrl).then(res => res.arrayBuffer());
+  const logoImage = await pdfDoc.embedPng(logoImageBytes);
+
+  const pages = pdfDoc.getPages();
+  pages.forEach((page) => {
+    const pageWidth = page.getWidth();
+    const pageHeight = page.getHeight();
+
+    // Tamanho menor da logo
+    const scale = 0.1;
+    const logoDims = logoImage.scale(scale);
+
+    // Altura ajustada para baixar as logos
+    const offsetY = 50; // valor em pixels para descer as logos
+
+    // Primeira logo: centro da metade esquerda
+    const logoX1 = (pageWidth / 4) - (logoDims.width / 2);
+    const logoY1 = (pageHeight / 2) - (logoDims.height / 2) - offsetY;
+
+    // Segunda logo: centro da metade direita
+    const logoX2 = (3 * pageWidth / 4) - (logoDims.width / 2);
+    const logoY2 = logoY1; // mesma altura
+
+    page.drawImage(logoImage, {
+      x: logoX1,
+      y: logoY1,
+      width: logoDims.width,
+      height: logoDims.height,
+    });
+
+    page.drawImage(logoImage, {
+      x: logoX2,
+      y: logoY2,
+      width: logoDims.width,
+      height: logoDims.height,
+    });
+  });
+}
+
+// --- MARCAR CANTOS EM L ---
+const cornerLength = 40; // aumentei o tamanho das linhas
+const lineWidth = 8; // mais espessa
+const lineColor = rgb(1, 1, 0); // amarelo escuro forte
+
+pages.forEach((page) => {
+  const pageWidth = page.getWidth();
+  const pageHeight = page.getHeight();
+
+  // Canto superior esquerdo
+  page.drawRectangle({ x: 0, y: pageHeight - lineWidth, width: cornerLength, height: lineWidth, color: lineColor });
+  page.drawRectangle({ x: 0, y: pageHeight - cornerLength, width: lineWidth, height: cornerLength, color: lineColor });
+
+  // Canto superior direito
+  page.drawRectangle({ x: pageWidth - cornerLength, y: pageHeight - lineWidth, width: cornerLength, height: lineWidth, color: lineColor });
+  page.drawRectangle({ x: pageWidth - lineWidth, y: pageHeight - cornerLength, width: lineWidth, height: cornerLength, color: lineColor });
+
+  // Canto inferior esquerdo
+  page.drawRectangle({ x: 0, y: 0, width: cornerLength, height: lineWidth, color: lineColor });
+  page.drawRectangle({ x: 0, y: 0, width: lineWidth, height: cornerLength, color: lineColor });
+
+  // Canto inferior direito
+  page.drawRectangle({ x: pageWidth - cornerLength, y: 0, width: cornerLength, height: lineWidth, color: lineColor });
+  page.drawRectangle({ x: pageWidth - lineWidth, y: 0, width: lineWidth, height: cornerLength, color: lineColor });
+});
+
+
+  // --- TÍTULO, SUBTÍTULO, MARCA D'ÁGUA, RODAPÉ E MALHAS ---
+// --- TÍTULO, SUBTÍTULO, MARCA D'ÁGUA, RODAPÉ E MALHAS ---
+pages.forEach((page) => {
+  const pageWidth = page.getWidth();
+  const pageHeight = page.getHeight();
+
+  // --- CONFIGURAÇÕES DE TAMANHO E ESTILO ---
+  const titleSize = 40;
+  const subTitleSize = 30;
+  const paddingX = 10;
+  const paddingY = 6;
+  const radius = 8;
+
+  // --- CÁLCULO DE LARGURAS ---
+  const titleWidth = font.widthOfTextAtSize(titulo, titleSize);
+  const subTitleWidth = font.widthOfTextAtSize(subtitulo, subTitleSize);
+  let startX = (pageWidth - (titleWidth + subTitleWidth)) / 2;
+  const topY = pageHeight - 40 - titleSize - paddingY;
+
+  // --- TÍTULO ---
+  page.drawRectangle({
+    x: startX - paddingX,
+    y: topY,
+    width: titleWidth + 2 * paddingX,
+    height: titleSize + 2 * paddingY,
+    color: rgb(1, 1, 0),
+    borderColor: rgb(0, 0, 0),
+    borderWidth: 1,
+    borderRadius: radius,
+  });
+
+  page.drawText(titulo, {
+    x: startX,
+    y: topY + paddingY,
+    size: titleSize,
+    font,
+    color: rgb(0, 0, 0),
+  });
+
+  // --- SUBTÍTULO ---
+  const subYOffset = (titleSize + 2 * paddingY - (subTitleSize + 2 * paddingY)) / 2;
+  startX += titleWidth;
+
+  page.drawRectangle({
+    x: startX - paddingX,
+    y: topY + subYOffset,
+    width: subTitleWidth + 2 * paddingX,
+    height: subTitleSize + 2 * paddingY,
+    color: rgb(0, 0, 0),
+    borderColor: rgb(1, 1, 0),
+    borderWidth: 1,
+    borderRadius: radius,
+  });
+
+  page.drawText(subtitulo, {
+    x: startX,
+    y: topY + subYOffset + paddingY,
+    size: subTitleSize,
+    font,
+    color: rgb(1, 1, 0),
+  });
+
+  // --- FRASE ABAIXO DO TÍTULO E SUBTÍTULO ---
+  const frase = "DIGITAL BOARD ESQUEMAS DIGITALIZADOS";
+  const fraseSize = 18;
+  const fraseWidth = font.widthOfTextAtSize(frase, fraseSize);
+  const fraseX = (pageWidth - fraseWidth) / 2;
+  const fraseY = topY - 35; // distância abaixo do subtítulo
+
+  // "Negrito" simulado com leve sobreposição
+  page.drawText(frase, { x: fraseX, y: fraseY, size: fraseSize, font, color: rgb(0, 0, 0) });
+  page.drawText(frase, { x: fraseX + 0.5, y: fraseY, size: fraseSize, font, color: rgb(0, 0, 0) 
+});
+
+
+    // MARCA D'ÁGUA
+    const watermarkText = "DIGITAL BOARD";
+    const wmFontSize = 15, wmOpacity = 0.2, wmSpacingX = 300, wmSpacingY = 130, wmAngle = -40;
+    for (let x = 0; x < pageWidth; x += wmSpacingX) {
+      for (let y = 0; y < pageHeight; y += wmSpacingY) {
+        page.drawText(watermarkText, {
+          x, y, size: wmFontSize, font,
+          color: rgb(0,0,0),
+          rotate: { type: 'degrees', angle: wmAngle },
+          opacity: wmOpacity
+        });
+      }
+    }
+
+    // RODAPÉ
+    const footerText = "WHATSAPP/TELEGRAM +55 (33) 98444-4376";
+    const footerFontSize = 12;
+    const footerX = (pageWidth - font.widthOfTextAtSize(footerText, footerFontSize)) / 2;
+    page.drawText(footerText, { x: footerX, y: 10, size: footerFontSize, font, color: rgb(0,0,0) });
+
+    // MALHAS
+    if(malhas.length > 0){
+      const malhaFontSize = 20, malhaHeight = 30, spacing = 15, radiusMalha = 50;
+      let totalWidth = 0;
+      const malhaWidths = malhas.map(m => { const w = font.widthOfTextAtSize(m.nome, malhaFontSize)+30; totalWidth+=w; return w; });
+      totalWidth += spacing*(malhas.length-1);
+      let startX = (pageWidth - totalWidth)/2, y = 30;
+
+      malhas.forEach((m,i)=>{
+        const w = malhaWidths[i];
+        const cor = hexToRgb(m.cor);
+        page.drawRectangle({ x:startX, y, width:w, height:malhaHeight, color:rgb(cor.r/255,cor.g/255,cor.b/255), borderRadius:radiusMalha });
+        const textW = font.widthOfTextAtSize(m.nome, malhaFontSize);
+        page.drawText(m.nome, { x: startX+(w-textW)/2, y: y + (malhaHeight-malhaFontSize)/2, size: malhaFontSize, font, color: rgb(1,1,1) });
+        startX += w + spacing;
+      });
+    }
+  });
+
+  // SALVAR PDF
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = gerarNomePDF();
+
+  link.click();
+});
+
+
+function hexToRgb(hex){
+  const bigint = parseInt(hex.slice(1),16);
+  return { r:(bigint>>16)&255, g:(bigint>>8)&255, b:bigint&255 };
+}
+function atualizarMalhas() {
+  const div = document.getElementById('malhas');
+  div.innerHTML = '';
+  malhas.forEach((m, index) => {
+    const el = document.createElement('div');
+    el.className = 'malha';
+    el.style.background = m.cor;
+    el.textContent = m.nome;
+
+    el.addEventListener('click', () => {
+      if (el.classList.contains('editing')) return; // já em edição
+      el.classList.add('editing');
+      el.innerHTML = '';
+
+      // input para nome
+      const inputNome = document.createElement('input');
+      inputNome.type = 'text';
+      inputNome.value = m.nome;
+      el.appendChild(inputNome);
+
+      // input para cor
+      const inputCor = document.createElement('input');
+      inputCor.type = 'color';
+      inputCor.value = m.cor;
+      el.appendChild(inputCor);
+
+      // botão salvar
+      const btnSalvar = document.createElement('button');
+      btnSalvar.textContent = 'OK';
+      btnSalvar.style.marginLeft = '5px';
+      btnSalvar.addEventListener('click', () => {
+        m.nome = inputNome.value.trim() || m.nome;
+        m.cor = inputCor.value;
+        atualizarMalhas();
+      });
+      el.appendChild(btnSalvar);
+    });
+
+    div.appendChild(el);
+  });
+}
+
+
+
+</script>
+
+</body>
+</html>
+
+
+
+
+
