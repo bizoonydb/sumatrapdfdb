@@ -4335,20 +4335,20 @@
     --doorhanger-icon-opacity: 0.9;
     --doorhanger-height: 8px;
 
-    --main-color: rgb(12 12 13);
-    --body-bg-color: rgb(26, 26, 26);
-    --progressBar-color: rgb(10 132 255);
+    --main-color: rgb(251, 255, 16);
+    --body-bg-color: rgb(228, 224, 224);
+    --progressBar-color: rgb(229, 255, 0);
     --progressBar-bg-color: rgb(221 221 222);
-    --progressBar-blend-color: rgb(23, 129, 235);
+    --progressBar-blend-color: rgb(0, 0, 0);
     --scrollbar-color: auto;
     --scrollbar-bg-color: auto;
-    --toolbar-icon-bg-color: rgb(0 0 0);
+    --toolbar-icon-bg-color: rgb(255, 255, 255);
     --toolbar-icon-hover-bg-color: rgb(0 0 0);
 
     --sidebar-narrow-bg-color: rgb(212 212 215 / 0.9);
     --sidebar-toolbar-bg-color: rgb(245 246 247);
-    --toolbar-bg-color: rgb(249 249 250);
-    --toolbar-border-color: rgb(184 184 184);
+    --toolbar-bg-color: rgba(37, 37, 37, 0.705);
+    --toolbar-border-color: rgb(238, 255, 0);
     --toolbar-box-shadow: 0 1px 0 var(--toolbar-border-color);
     --toolbar-border-bottom: none;
     --toolbarSidebar-box-shadow: inset calc(-1px * var(--dir-factor)) 0 0 rgb(0 0 0 / 0.25), 0 1px 0 rgb(0 0 0 / 0.15), 0 0 1px rgb(0 0 0 / 0.1);
@@ -4358,12 +4358,12 @@
     --toggled-btn-bg-color: rgb(0 0 0 / 0.3);
     --toggled-hover-active-btn-color: rgb(0 0 0 / 0.4);
     --toggled-hover-btn-outline: none;
-    --dropdown-btn-bg-color: rgb(215 215 219);
+    --dropdown-btn-bg-color: rgb(37, 37, 37);
     --dropdown-btn-border: none;
-    --separator-color: rgb(0 0 0 / 0.3);
-    --field-color: rgb(6 6 6);
-    --field-bg-color: rgb(255 255 255);
-    --field-border-color: rgb(187 187 188);
+    --separator-color: rgba(255, 238, 0, 0.733);
+    --field-color: rgb(247, 222, 0);
+    --field-bg-color: rgb(37, 37, 37);
+    --field-border-color: rgb(247, 210, 0);
     --treeitem-color: rgb(0 0 0 / 0.8);
     --treeitem-bg-color: rgb(0 0 0 / 0.15);
     --treeitem-hover-color: rgb(0 0 0 / 0.9);
@@ -4371,10 +4371,10 @@
     --treeitem-selected-bg-color: rgb(0 0 0 / 0.25);
     --thumbnail-hover-color: rgb(0 0 0 / 0.1);
     --thumbnail-selected-color: rgb(0 0 0 / 0.2);
-    --doorhanger-bg-color: rgb(255 255 255);
-    --doorhanger-border-color: rgb(12 12 13 / 0.2);
+    --doorhanger-bg-color: rgb(112, 112, 112);
+    --doorhanger-border-color: rgb(255, 238, 0);
     --doorhanger-hover-color: rgb(12 12 13);
-    --doorhanger-separator-color: rgb(222 222 222);
+    --doorhanger-separator-color: rgb(255, 251, 0);
     --dialog-button-border: none;
     --dialog-button-bg-color: rgb(12 12 13 / 0.1);
     --dialog-button-hover-bg-color: rgb(12 12 13 / 0.3);
@@ -5952,7 +5952,7 @@ dialog :link {
     position: relative;
     box-sizing: border-box;
     font: message-box;
-    background-color: rgb(66, 152, 206);
+    background-color: rgb(101, 102, 102);
     box-shadow: var(--toolbar-box-shadow);
     border-bottom: var(--toolbar-border-bottom);
 }
