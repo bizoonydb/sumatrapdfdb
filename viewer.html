@@ -936,23 +936,4 @@
     <div id="printContainer"></div>
 </body>
 
-
-<script>
-    
-    const buttons = document.querySelectorAll('#cursorToolButtons .toolbarButton');
-
-   
-    buttons.forEach(button => {
-        button.addEventListener('click', () => {
-            buttons.forEach(btn => {
-                btn.style.background = 'transparent';
-                btn.style.color = 'black';
-            });
-            button.style.background = '#4CAF50';
-            button.style.color = 'white';
-        });
-    });
-</script>
-
-
 </html>
