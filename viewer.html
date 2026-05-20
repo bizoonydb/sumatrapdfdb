@@ -14,11 +14,283 @@
     <script src="./build/pdf.mjs" type="module"></script>
 
     <link rel="stylesheet" href="./build/viewer.css">
+    <style>
+        #openLocalPdfButton::before {
+            --toolbarButton-openFile-icon: url("./build/images/toolbarButton-openFile.svg");
+            -webkit-mask-image: var(--toolbarButton-openFile-icon);
+            mask-image: var(--toolbarButton-openFile-icon);
+        }
+
+        #findInput {
+            background: #fae9c4 !important;
+            border-radius: 999px !important;
+            border: 1px solid #000000 !important;
+            padding-inline: 14px !important;
+        }
+
+        .pageCounterLabel {
+            align-self: center;
+            color: #000000;
+            font-size: 12px;
+            font-weight: 590;
+            line-height: 16px;
+            margin-inline-end: 1px;
+        }
+
+        .loadingInput.start:has(> #pageNumber) {
+            margin-inline-start: 0 !important;
+            padding-inline-start: 0 !important;
+        }
+
+        #numPages {
+            color: #000000;
+            font-size: 12px !important;
+            font-weight: 590;
+            line-height: 16px;
+            padding-inline-start: 2px !important;
+        }
+
+        #scaleSelectContainer {
+            min-width: 76px !important;
+            width: 76px !important;
+        }
+
+        #scaleSelect {
+            min-width: 76px !important;
+            width: 76px !important;
+            padding-inline: 6px 18px !important;
+        }
+
+        #pageNumber {
+            background: transparent !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            color: #000000 !important;
+            font-size: 12px !important;
+            font-weight: 590 !important;
+            line-height: 16px !important;
+            padding: 0 !important;
+            text-align: start !important;
+            width: 2.2ch !important;
+        }
+
+        #pageNumber:focus {
+            outline: none !important;
+            border: 0 !important;
+        }
+
+        .pageCounterGroup {
+            margin-inline-end: 0 !important;
+        }
+
+        .pageNavButtons {
+            margin-inline-end: 14px !important;
+        }
+
+        .splitToolbarButtonSeparator {
+            display: none !important;
+        }
+
+        #secondaryToolbarToggleButton {
+            width: auto !important;
+            min-width: 104px !important;
+            height: 28px !important;
+            padding: 0 10px !important;
+            border: 0 !important;
+            border-radius: 0 999px 999px 0 !important;
+            background: #0078d4 !important;
+            box-shadow: none !important;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            font-size: 10px !important;
+            font-weight: 700 !important;
+            line-height: 28px !important;
+            text-align: center !important;
+        }
+
+        #secondaryToolbarToggleButton::before {
+            display: none !important;
+        }
+
+        #secondaryToolbarToggleButton span {
+            display: inline !important;
+            width: auto !important;
+            height: auto !important;
+            overflow: visible !important;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            font-size: 10px !important;
+            font-weight: 700 !important;
+            line-height: 28px !important;
+            opacity: 1 !important;
+            white-space: nowrap !important;
+        }
+
+        #previous,
+        #next {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: #000000 !important;
+            opacity: 1 !important;
+            filter: none !important;
+            -webkit-text-fill-color: #000000 !important;
+        }
+
+        #previous::before,
+        #next::before {
+            display: none !important;
+            
+        }
+
+        #previous i,
+        #next i {
+            color: #000000 !important;
+            font-size: 18px;
+            font-weight: 900;
+            -webkit-text-stroke: 1px currentColor;
+            -webkit-text-fill-color: #000000 !important;
+            opacity: 1 !important;
+            filter: none !important;
+        }
+
+        .toolbarButton#previous:is([disabled="disabled"], [disabled]),
+        .toolbarButton#next:is([disabled="disabled"], [disabled]),
+        .toolbarButton#previous:is([disabled="disabled"], [disabled]) i,
+        .toolbarButton#next:is([disabled="disabled"], [disabled]) i,
+        .toolbarButton#previous i::before,
+        .toolbarButton#next i::before {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            opacity: 1 !important;
+            filter: none !important;
+        }
+
+        #findPreviousButton,
+        #findNextButton {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        #findPreviousButton i,
+        #findNextButton i {
+            font-size: 18px;
+            font-weight: 900;
+            -webkit-text-stroke: 1px currentColor;
+        }
+
+        #fit50Button::before,
+        #viewFindButton::before,
+        #zoomOutButton::before,
+        #zoomInButton::before,
+        #rotateRightButton::before {
+            content: "" !important;
+            width: 24px !important;
+            height: 24px !important;
+            background-color: transparent !important;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+            background-size: 24px 24px !important;
+            -webkit-mask-image: none !important;
+            mask-image: none !important;
+            opacity: 1 !important;
+            filter: none !important;
+        }
+
+        #fit50Button::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 3H3v5'/%3E%3Cpath d='M3 3l6 6'/%3E%3Cpath d='M16 3h5v5'/%3E%3Cpath d='M21 3l-6 6'/%3E%3Cpath d='M8 21H3v-5'/%3E%3Cpath d='M3 21l6-6'/%3E%3Cpath d='M16 21h5v-5'/%3E%3Cpath d='M21 21l-6-6'/%3E%3Cpath d='M8 8l8 8'/%3E%3Cpath d='M16 8l-8 8'/%3E%3C/svg%3E") !important;
+        }
+
+        #viewFindButton::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.8'/%3E%3Cpath d='M15.5 15.5 21 21'/%3E%3C/svg%3E") !important;
+        }
+
+        #zoomOutButton::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M16 16l5 5'/%3E%3Cpath d='M7.7 10.5h5.6' stroke-width='2.8'/%3E%3C/svg%3E") !important;
+        }
+
+        #zoomInButton::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M16 16l5 5'/%3E%3Cpath d='M7.7 10.5h5.6' stroke-width='2.8'/%3E%3Cpath d='M10.5 7.7v5.6' stroke-width='2.8'/%3E%3C/svg%3E") !important;
+        }
+
+        #rotateRightButton::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12a9 9 0 1 1-3-6.7'/%3E%3Cpath d='M21 3v6h-6'/%3E%3C/svg%3E") !important;
+        }
+
+        .toolbar,
+        #toolbarContainer,
+        #toolbarViewer {
+            background: #ffffff !important;
+        }
+
+        #outerContainer.sidebarOpen #viewerContainer:not(.pdfPresentationMode),
+        #outerContainer.sidebarOpen #loadingBar {
+            inset-inline-start: 0 !important;
+        }
+
+        .textLayer .highlight.selected,
+        .selected:is(.textLayer .highlight) {
+            outline: 3px solid #ff0000 !important;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px #ff0000 !important;
+            background-color: rgb(255 0 0 / 0.18) !important;
+        }
+
+        #findStatusOverlay {
+            position: fixed;
+            z-index: 10000;
+            background: rgb(255 255 255 / 0.95);
+            border-radius: 4px;
+            padding: 3px 8px;
+            font: 700 13px Arial, sans-serif;
+            pointer-events: none;
+            text-transform: lowercase;
+        }
+
+        #findStatusOverlay.notFound {
+            color: #ff0000;
+            border: 1px solid #ff0000;
+            animation: findNotFoundBlink 0.8s steps(2, start) infinite;
+        }
+
+        #findStatusOverlay.found {
+            color: #008000;
+            border: 1px solid #008000;
+            animation: none;
+        }
+
+        #findStatusOverlay.hidden {
+            display: none;
+        }
+
+        @keyframes findNotFoundBlink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.15;
+            }
+        }
+    </style>
 
     <script src="./viewer.mjs" type="module"></script>
 </head>
 
 <body tabindex="0">
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("fit50Button")?.addEventListener("click", () => {
+                if (window.PDFViewerApplication?.pdfViewer) {
+                    window.PDFViewerApplication.pdfViewer.currentScaleValue = "page-fit";
+                }
+            });
+
+            document.getElementById("rotateRightButton")?.addEventListener("click", () => {
+                window.PDFViewerApplication?.rotatePages?.(90);
+            });
+        });
+    </script>
     <div id="outerContainer">
 
 
@@ -37,35 +309,37 @@
 
                             <div class="toolbarButtonSpacer"></div>
 
-
-                            <input id="findInput" class="toolbarField" tabindex="0" data-l10n-id="pdfjs-find-input"
-                                aria-invalid="false">
-
                             <div class="toolbarHorizontalGroup">
-                                <button id="findPreviousButton" class="toolbarButto" type="button" tabindex="0"
-                                    data-l10n-id="pdfjs-find-previous-button">
-                                    <i class="fa-solid fa-arrow-left"></i>
+                                <button id="fit50Button" class="toolbarButton" type="button" tabindex="0"
+                                    title="Enquadrar em 50%" aria-label="Enquadrar em 50%">
+                                    <span>50%</span>
                                 </button>
-
                                 <div class="splitToolbarButtonSeparator"></div>
-
-                                <button id="findNextButton" class="toolbarButto" type="button" tabindex="0"
-                                    data-l10n-id="pdfjs-find-next-button">
-                                    <i class="fa-solid fa-arrow-right"></i>
+                                <button id="zoomOutButton" class="toolbarButton" type="button" tabindex="0"
+                                    data-l10n-id="pdfjs-zoom-out-button">
+                                    <span data-l10n-id="pdfjs-zoom-out-button-label"></span>
+                                </button>
+                                <div class="splitToolbarButtonSeparator"></div>
+                                <button id="zoomInButton" class="toolbarButton" type="button" tabindex="0"
+                                    data-l10n-id="pdfjs-zoom-in-button">
+                                    <span data-l10n-id="pdfjs-zoom-in-button-label"></span>
+                                </button>
+                                <div class="splitToolbarButtonSeparator"></div>
+                                <button id="rotateRightButton" class="toolbarButton" type="button" tabindex="0"
+                                    title="Girar para a direita" aria-label="Girar para a direita">
+                                    <span>Girar para a direita</span>
                                 </button>
                             </div>
 
 
+                            <input id="findInput" class="toolbarField" tabindex="0" data-l10n-id="pdfjs-find-input"
+                                aria-invalid="false">
+
                             <div class="toolbarButtonWithContainer">
-
-
-
-
                                 <button id="viewFindButton" class="toolbarButton" type="button" tabindex="0"
                                     data-l10n-id="pdfjs-findbar-button" aria-expanded="false" aria-controls="findbar">
                                     <span data-l10n-id="pdfjs-findbar-button-label"></span>
                                 </button>
-
 
                                 <div class="hidden doorHanger toolbarHorizontalGroup" id="findbar">
                                     <div id="findInputContainer" class="toolbarHorizontalGroup">
@@ -105,18 +379,53 @@
                                         <span id="findResultsCount" class="toolbarLabel"></span>
                                         <span id="findMsg" class="toolbarLabel"></span>
                                     </div>
-                                </div> 
+                                </div>
+                            </div>
+
+                            <div class="toolbarHorizontalGroup">
+                                <button id="findPreviousButton" class="toolbarButto" type="button" tabindex="0"
+                                    data-l10n-id="pdfjs-find-previous-button">
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                </button>
+
+                                <div class="splitToolbarButtonSeparator"></div>
+
+                                <button id="findNextButton" class="toolbarButto" type="button" tabindex="0"
+                                    data-l10n-id="pdfjs-find-next-button">
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
                         </div>
                         <div id="toolbarViewerMiddle" class="toolbarHorizontalGroup">
-                            <div class="toolbarHorizontalGroup">
-                                <button id="zoomOutButton" class="toolbarButton" type="button" tabindex="0"
-                                    data-l10n-id="pdfjs-zoom-out-button">
-                                    <span data-l10n-id="pdfjs-zoom-out-button-label"></span>
+                        </div>
+                        <div id="toolbarViewerRight" class="toolbarHorizontalGroup">
+
+
+
+                            <button id="openLocalPdfButton" class="toolbarButton" type="button" tabindex="0"
+                                title="Abrir PDF local" aria-label="Abrir PDF local">
+                                <span>Abrir PDF local</span>
+                            </button>
+
+                            <div class="toolbarHorizontalGroup pageCounterGroup">
+                                <span class="pageCounterLabel">Page</span>
+                                <span class="loadingInput start toolbarHorizontalGroup">
+                                    <input type="number" id="pageNumber" class="toolbarField" value="1" min="1"
+                                        tabindex="0" data-l10n-id="pdfjs-page-input" autocomplete="off">
+                                </span>
+                                <span id="numPages" class="toolbarLabel"></span>
+                            </div>
+                            <div class="toolbarHorizontalGroup hiddenSmallView pageNavButtons">
+                                <button class="toolbarButton" type="button" id="previous" tabindex="0"
+                                    data-l10n-id="pdfjs-previous-button">
+                                    <i class="fa-solid fa-arrow-up"></i>
+                                    <span data-l10n-id="pdfjs-previous-button-label"></span>
                                 </button>
                                 <div class="splitToolbarButtonSeparator"></div>
-                                <button id="zoomInButton" class="toolbarButton" type="button" tabindex="0"
-                                    data-l10n-id="pdfjs-zoom-in-button">
-                                    <span data-l10n-id="pdfjs-zoom-in-button-label"></span>
+                                <button class="toolbarButton" type="button" id="next" tabindex="0"
+                                    data-l10n-id="pdfjs-next-button">
+                                    <i class="fa-solid fa-arrow-down"></i>
+                                    <span data-l10n-id="pdfjs-next-button-label"></span>
                                 </button>
                             </div>
                             <span id="scaleSelectContainer" class="dropdownToolbarButton">
@@ -133,8 +442,16 @@
                                     <option id="customScaleOption" value="custom" disabled="disabled" hidden="true"
                                         data-l10n-id="pdfjs-page-scale-percent" data-l10n-args='{ "scale": 0 }'>
                                     </option>
+                                    <option value="0.1" data-l10n-id="pdfjs-page-scale-percent"
+                                        data-l10n-args='{ "scale": 10 }'></option>
+                                    <option value="0.25" data-l10n-id="pdfjs-page-scale-percent"
+                                        data-l10n-args='{ "scale": 25 }'></option>
+                                    <option value="0.4" data-l10n-id="pdfjs-page-scale-percent"
+                                        data-l10n-args='{ "scale": 40 }'></option>
                                     <option value="0.5" data-l10n-id="pdfjs-page-scale-percent"
                                         data-l10n-args='{ "scale": 50 }'></option>
+                                    <option value="0.7" data-l10n-id="pdfjs-page-scale-percent"
+                                        data-l10n-args='{ "scale": 70 }'></option>
                                     <option value="0.75" data-l10n-id="pdfjs-page-scale-percent"
                                         data-l10n-args='{ "scale": 75 }'>
                                     </option>
@@ -143,9 +460,15 @@
                                     <option value="1.25" data-l10n-id="pdfjs-page-scale-percent"
                                         data-l10n-args='{ "scale": 125 }'>
                                     </option>
+                                    <option value="1.3" data-l10n-id="pdfjs-page-scale-percent"
+                                        data-l10n-args='{ "scale": 130 }'></option>
                                     <option value="1.5" data-l10n-id="pdfjs-page-scale-percent"
                                         data-l10n-args='{ "scale": 150 }'>
                                     </option>
+                                    <option value="1.6" data-l10n-id="pdfjs-page-scale-percent"
+                                        data-l10n-args='{ "scale": 160 }'></option>
+                                    <option value="1.9" data-l10n-id="pdfjs-page-scale-percent"
+                                        data-l10n-args='{ "scale": 190 }'></option>
                                     <option value="2" data-l10n-id="pdfjs-page-scale-percent"
                                         data-l10n-args='{ "scale": 200 }'></option>
                                     <option value="3" data-l10n-id="pdfjs-page-scale-percent"
@@ -154,35 +477,6 @@
                                         data-l10n-args='{ "scale": 400 }'></option>
                                 </select>
                             </span>
-
-                            
-
-
-
-                        </div>
-                        <div id="toolbarViewerRight" class="toolbarHorizontalGroup">
-
-
-
-
-                            <div class="toolbarHorizontalGroup hiddenSmallView">
-                                <button class="toolbarButton" type="button" id="previous" tabindex="0"
-                                    data-l10n-id="pdfjs-previous-button">
-                                    <span data-l10n-id="pdfjs-previous-button-label"></span>
-                                </button>
-                                <div class="splitToolbarButtonSeparator"></div>
-                                <button class="toolbarButton" type="button" id="next" tabindex="0"
-                                    data-l10n-id="pdfjs-next-button">
-                                    <span data-l10n-id="pdfjs-next-button-label"></span>
-                                </button>
-                            </div>
-                            <div class="toolbarHorizontalGroup">
-                                <span class="loadingInput start toolbarHorizontalGroup">
-                                    <input type="number" id="pageNumber" class="toolbarField" value="1" min="1"
-                                        tabindex="0" data-l10n-id="pdfjs-page-input" autocomplete="off">
-                                </span>
-                                <span id="numPages" class="toolbarLabel"></span>
-                            </div>
 
 
 
@@ -369,9 +663,9 @@
 
                             <div id="secondaryToolbarToggle" class="toolbarButtonWithContainer">
                                 <button id="secondaryToolbarToggleButton" class="toolbarButton" type="button"
-                                    tabindex="0" data-l10n-id="pdfjs-tools-button" aria-expanded="false"
+                                    tabindex="0" aria-label="MORE FUNCTIONS" aria-expanded="false"
                                     aria-haspopup="true" aria-controls="secondaryToolbar">
-                                    <span data-l10n-id="pdfjs-tools-button-label"></span>
+                                    <span>MORE FUNCTIONS</span>
                                 </button>
                                 <div id="secondaryToolbar" class="hidden doorHangerRight menu">
                                     <div id="secondaryToolbarButtonContainer" class="menuContainer">
@@ -935,5 +1229,179 @@
     </div> 
     <div id="printContainer"></div>
 </body>
+
+
+<script>
+    
+    const buttons = document.querySelectorAll('#cursorToolButtons .toolbarButton');
+
+   
+    buttons.forEach(button => {
+        button.addEventListener('click', () => {
+            buttons.forEach(btn => {
+                btn.style.background = 'transparent';
+                btn.style.color = 'black';
+            });
+            button.style.background = '#4CAF50';
+            button.style.color = 'white';
+        });
+    });
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const openLocalPdfButton = document.getElementById("openLocalPdfButton");
+
+  function base64ToUint8Array(base64) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    return bytes;
+  }
+
+  openLocalPdfButton?.addEventListener("click", async function () {
+    if (window.electron?.openLocalPdf && window.PDFViewerApplication?.open) {
+      try {
+        const file = await window.electron.openLocalPdf();
+        if (!file) return;
+
+        await window.PDFViewerApplication.open({
+          data: base64ToUint8Array(file.data),
+          originalUrl: file.name
+        });
+        return;
+      } catch (error) {
+        console.error("Erro ao abrir PDF local:", error);
+        alert("Nao foi possivel abrir o PDF local.");
+      }
+    }
+
+    const fileInput = document.getElementById("fileInput");
+
+    if (fileInput) {
+      fileInput.accept = "application/pdf,.pdf";
+      fileInput.click();
+      return;
+    }
+
+    if (window.PDFViewerApplication?._openFileInput) {
+      window.PDFViewerApplication._openFileInput.accept = "application/pdf,.pdf";
+      window.PDFViewerApplication._openFileInput.click();
+    }
+  });
+
+  // Espera o PDF carregar
+  const urlParams = new URLSearchParams(window.location.search);
+  const fileUrl = urlParams.get("file");
+
+  if (!fileUrl) return; // se não houver ?file=, não cria o botão
+
+  // --- Cria o botão ---
+  const downloadBtn = document.createElement("button");
+  downloadBtn.textContent = "⬇️ Baixar PDF";
+  downloadBtn.style.position = "fixed";
+  downloadBtn.style.top = "70px";
+  downloadBtn.style.right = "20px";
+  downloadBtn.style.zIndex = "9999";
+  downloadBtn.style.background = "#0078D7";
+  downloadBtn.style.color = "#fff";
+  downloadBtn.style.border = "none";
+  downloadBtn.style.padding = "10px 16px";
+  downloadBtn.style.borderRadius = "8px";
+  downloadBtn.style.fontSize = "14px";
+  downloadBtn.style.cursor = "pointer";
+  downloadBtn.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+  downloadBtn.style.transition = "background 0.2s";
+
+  downloadBtn.onmouseenter = () => (downloadBtn.style.background = "#005a9e");
+  downloadBtn.onmouseleave = () => (downloadBtn.style.background = "#0078D7");
+
+  // --- Função de download ---
+  downloadBtn.addEventListener("click", async () => {
+    try {
+      const response = await fetch(fileUrl);
+      if (!response.ok) throw new Error("Erro ao baixar PDF");
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileUrl.split("/").pop().split("?")[0]; // nome do arquivo
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Falha ao baixar o PDF: " + err.message);
+    }
+  });
+
+  document.body.appendChild(downloadBtn);
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const fileUrl = urlParams.get("file");
+  if (!fileUrl) return;
+  return;
+
+  // --- Cria a barra lateral ---
+  const sidebar = document.createElement("div");
+  sidebar.style.position = "fixed";
+  sidebar.style.top = "70px";
+  sidebar.style.left = "0";
+  sidebar.style.width = "260px";
+  sidebar.style.background = "rgba(30, 30, 30, 0.9)";
+  sidebar.style.color = "#fff";
+  sidebar.style.padding = "12px 16px";
+  sidebar.style.zIndex = "9999";
+  sidebar.style.fontSize = "13px";
+  sidebar.style.lineHeight = "1.4";
+  sidebar.style.borderTopRightRadius = "10px";
+  sidebar.style.borderBottomRightRadius = "10px";
+  sidebar.style.boxShadow = "2px 2px 6px rgba(0,0,0,0.3)";
+  sidebar.style.overflow = "hidden";
+  sidebar.style.whiteSpace = "nowrap";
+  sidebar.style.textOverflow = "ellipsis";
+  sidebar.style.cursor = "pointer";
+  sidebar.title = fileUrl;
+
+  // --- Conteúdo da barra ---
+  sidebar.innerHTML = `
+    <strong style="font-size:14px;">📄 Arquivo carregado:</strong><br>
+    <span id="file-url-display" style="color:#00d4ff;">${fileUrl}</span>
+  `;
+
+  // --- Clique para copiar ---
+  sidebar.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(fileUrl);
+      sidebar.style.background = "rgba(0, 128, 255, 0.8)";
+      sidebar.innerHTML = `
+        <strong style="font-size:14px;">✅ Copiado!</strong><br>
+        <span style="color:#fff;">${fileUrl}</span>
+      `;
+      setTimeout(() => {
+        sidebar.style.background = "rgba(30, 30, 30, 0.9)";
+        sidebar.innerHTML = `
+          <strong style="font-size:14px;">📄 Arquivo carregado:</strong><br>
+          <span id="file-url-display" style="color:#00d4ff;">${fileUrl}</span>
+        `;
+      }, 1500);
+    } catch (err) {
+      alert("Falha ao copiar a URL: " + err.message);
+    }
+  });
+
+  document.body.appendChild(sidebar);
+});
+</script>
 
 </html>
