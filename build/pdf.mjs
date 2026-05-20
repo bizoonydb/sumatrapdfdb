@@ -1218,7 +1218,7 @@ function getRGB(color) {
 }
 function getColorValues(colors) {
   const span = document.createElement("span");
-  span.style.visibility = "s";
+  span.style.visibility = "hidden";
   document.body.append(span);
   for (const name of colors.keys()) {
     span.style.color = name;
@@ -1336,7 +1336,7 @@ class EditorToolbar {
   }
   render() {
     const editToolbar = this.#toolbar = document.createElement("div");
-    editToolbar.classList.add("editToolbar", "s");
+    editToolbar.classList.add("editToolbar", "hidden");
     editToolbar.setAttribute("role", "toolbar");
     const signal = this.#editor._uiManager._signal;
     editToolbar.addEventListener("contextmenu", noContextMenu, {
@@ -1389,11 +1389,11 @@ class EditorToolbar {
     });
   }
   hide() {
-    this.#toolbar.classList.add("s");
+    this.#toolbar.classList.add("hidden");
     this.#colorPicker?.hideDropdown();
   }
   show() {
-    this.#toolbar.classList.remove("s");
+    this.#toolbar.classList.remove("hidden");
     this.#altText?.shown();
   }
   #addDeleteButton() {
@@ -1509,7 +1509,7 @@ class HighlightToolbar {
     button.setAttribute("data-l10n-id", `pdfjs-highlight-floating-button1`);
     const span = document.createElement("span");
     button.append(span);
-    span.className = "visuallys";
+    span.className = "visuallyHidden";
     span.setAttribute("data-l10n-id", "pdfjs-highlight-floating-button-label");
     const signal = this.#uiManager._signal;
     button.addEventListener("contextmenu", noContextMenu, {
@@ -3462,7 +3462,7 @@ class AltText {
       badge.className = "noAltTextBadge";
       this.#editor.div.append(badge);
     }
-    this.#badge.classList.toggle("s", !visibility);
+    this.#badge.classList.toggle("hidden", !visibility);
   }
   serialize(isForCopying) {
     let altText = this.#altText;
@@ -4534,7 +4534,7 @@ class AnnotationEditor {
       div.setAttribute("data-l10n-id", this.defaultL10nId);
     }
     if (!this._isVisible) {
-      div.classList.add("s");
+      div.classList.add("hidden");
     }
     this.setInForeground();
     this.#addFocusListeners();
@@ -4880,7 +4880,7 @@ class AnnotationEditor {
   makeResizable() {
     if (this.isResizable) {
       this.#createResizers();
-      this.#resizersDiv.classList.remove("s");
+      this.#resizersDiv.classList.remove("hidden");
     }
   }
   get toolbarPosition() {
@@ -5005,7 +5005,7 @@ class AnnotationEditor {
     this.#altText?.toggleAltTextBadge(false);
   }
   unselect() {
-    this.#resizersDiv?.classList.add("s");
+    this.#resizersDiv?.classList.add("hidden");
     this.div?.classList.remove("selectedEditor");
     if (this.div?.contains(document.activeElement)) {
       this._uiManager.currentLayer.div.focus({
@@ -5093,7 +5093,7 @@ class AnnotationEditor {
     });
   }
   show(visible = this._isVisible) {
-    this.div.classList.toggle("s", !visible);
+    this.div.classList.toggle("hidden", !visible);
     this._isVisible = visible;
   }
   enable() {
@@ -5634,7 +5634,7 @@ class FontLoader {
     const rule = `@font-face {font-family:"${loadTestFontId}";src:${url}}`;
     this.insertRule(rule);
     const div = this._document.createElement("div");
-    div.style.visibility = "s";
+    div.style.visibility = "hidden";
     div.style.width = div.style.height = "10px";
     div.style.position = "absolute";
     div.style.top = div.style.left = "0px";
@@ -6268,7 +6268,7 @@ class DOMFilterFactory extends BaseFilterFactory {
       const {
         style
       } = div;
-      style.visibility = "s";
+      style.visibility = "hidden";
       style.contain = "strict";
       style.width = style.height = 0;
       style.position = "absolute";
@@ -11383,7 +11383,7 @@ class TextLayer {
     let ctx = this.#canvasContexts.get(lang ||= "");
     if (!ctx) {
       const canvas = document.createElement("canvas");
-      canvas.className = "sCanvasElement";
+      canvas.className = "hiddenCanvasElement";
       canvas.lang = lang;
       document.body.append(canvas);
       ctx = canvas.getContext("2d", {
@@ -13664,7 +13664,7 @@ class XfaLayer {
   static update(parameters) {
     const transform = `matrix(${parameters.viewport.transform.join(",")})`;
     parameters.div.style.transform = transform;
-    parameters.div.s = false;
+    parameters.div.hidden = false;
   }
 }
 
@@ -13962,10 +13962,10 @@ class AnnotationElement {
         const {
           display
         } = event.detail;
-        const s = display % 2 === 1;
-        this.container.style.visibility = s ? "s" : "visible";
+        const hidden = display % 2 === 1;
+        this.container.style.visibility = hidden ? "hidden" : "visible";
         this.annotationStorage.setValue(this.data.id, {
-          noView: s,
+          noView: hidden,
           noPrint: display === 1 || display === 2
         });
       },
@@ -13974,14 +13974,14 @@ class AnnotationElement {
           noPrint: !event.detail.print
         });
       },
-      s: event => {
+      hidden: event => {
         const {
-          s
+          hidden
         } = event.detail;
-        this.container.style.visibility = s ? "s" : "visible";
+        this.container.style.visibility = hidden ? "hidden" : "visible";
         this.annotationStorage.setValue(this.data.id, {
-          noPrint: s,
-          noView: s
+          noPrint: hidden,
+          noView: hidden
         });
       },
       focus: event => {
@@ -14201,13 +14201,13 @@ class AnnotationElement {
   }
   show() {
     if (this.container) {
-      this.container.s = false;
+      this.container.hidden = false;
     }
     this.popup?.maybeShow();
   }
   hide() {
     if (this.container) {
-      this.container.s = true;
+      this.container.hidden = true;
     }
     this.popup?.forceHide();
   }
@@ -14497,9 +14497,9 @@ class WidgetAnnotationElement extends AnnotationElement {
   showElementAndHideCanvas(element) {
     if (this.data.hasOwnCanvas) {
       if (element.previousSibling?.nodeName === "CANVAS") {
-        element.previousSibling.s = true;
+        element.previousSibling.hidden = true;
       }
-      element.s = false;
+      element.hidden = false;
     }
   }
   _getKeyModifier(event) {
@@ -14650,18 +14650,18 @@ class TextWidgetAnnotationElement extends WidgetAnnotationElement {
         element = document.createElement("textarea");
         element.textContent = fieldFormattedValues ?? textContent;
         if (this.data.doNotScroll) {
-          element.style.overflowY = "s";
+          element.style.overflowY = "hidden";
         }
       } else {
         element = document.createElement("input");
         element.type = this.data.password ? "password" : "text";
         element.setAttribute("value", fieldFormattedValues ?? textContent);
         if (this.data.doNotScroll) {
-          element.style.overflowX = "s";
+          element.style.overflowX = "hidden";
         }
       }
       if (this.data.hasOwnCanvas) {
-        element.s = true;
+        element.hidden = true;
       }
       GetElementsByNameSet.add(element);
       element.setAttribute("data-element-id", id);
@@ -14909,7 +14909,7 @@ class TextWidgetAnnotationElement extends WidgetAnnotationElement {
       element.style.verticalAlign = "middle";
       element.style.display = "table-cell";
       if (this.data.hasOwnCanvas) {
-        element.s = true;
+        element.hidden = true;
       }
     }
     this._setTextStyle(element);
@@ -15149,7 +15149,7 @@ class ChoiceWidgetAnnotationElement extends WidgetAnnotationElement {
     if (addAnEmptyEntry) {
       const noneOptionElement = document.createElement("option");
       noneOptionElement.value = " ";
-      noneOptionElement.setAttribute("s", true);
+      noneOptionElement.setAttribute("hidden", true);
       noneOptionElement.setAttribute("selected", true);
       selectElement.prepend(noneOptionElement);
       removeEmptyEntry = () => {
@@ -15415,7 +15415,7 @@ class PopupElement {
     for (const element of elements) {
       element.container?.addEventListener("keydown", this.#boundKeyDown);
     }
-    this.#container.s = true;
+    this.#container.hidden = true;
     if (open) {
       this.#toggle();
     }
@@ -15618,7 +15618,7 @@ class PopupElement {
     }
     if (!this.isVisible) {
       this.#setPosition();
-      this.#container.s = false;
+      this.#container.hidden = false;
       this.#container.style.zIndex = parseInt(this.#container.style.zIndex) + 1000;
     } else if (this.#pinned) {
       this.#container.classList.add("focused");
@@ -15629,7 +15629,7 @@ class PopupElement {
     if (this.#pinned || !this.isVisible) {
       return;
     }
-    this.#container.s = true;
+    this.#container.hidden = true;
     this.#container.style.zIndex = parseInt(this.#container.style.zIndex) - 1000;
   }
   forceHide() {
@@ -15637,7 +15637,7 @@ class PopupElement {
     if (!this.#wasVisible) {
       return;
     }
-    this.#container.s = true;
+    this.#container.hidden = true;
   }
   maybeShow() {
     if (!this.#wasVisible) {
@@ -15647,10 +15647,10 @@ class PopupElement {
       this.#show();
     }
     this.#wasVisible = false;
-    this.#container.s = false;
+    this.#container.hidden = false;
   }
   get isVisible() {
-    return this.#container.s === false;
+    return this.#container.hidden === false;
   }
 }
 class FreeTextAnnotationElement extends AnnotationElement {
@@ -16220,8 +16220,8 @@ class AnnotationLayer {
         }
       }
       const rendered = element.render();
-      if (data.s) {
-        rendered.style.visibility = "s";
+      if (data.hidden) {
+        rendered.style.visibility = "hidden";
       }
       await this.#appendElement(rendered, data.id);
       if (element._isEditable) {
@@ -16259,7 +16259,7 @@ class AnnotationLayer {
       rotation: viewport.rotation
     });
     this.#setAnnotationCanvasMap();
-    layer.s = false;
+    layer.hidden = false;
   }
   #setAnnotationCanvasMap() {
     if (!this.#annotationCanvasMap) {
@@ -16561,14 +16561,14 @@ class FreeTextEditor extends AnnotationEditor {
         div
       } = this;
       const savedDisplay = div.style.display;
-      const savedVisibility = div.classList.contains("s");
-      div.classList.remove("s");
-      div.style.display = "s";
+      const savedVisibility = div.classList.contains("hidden");
+      div.classList.remove("hidden");
+      div.style.display = "hidden";
       currentLayer.div.append(this.div);
       rect = div.getBoundingClientRect();
       div.remove();
       div.style.display = savedDisplay;
-      div.classList.toggle("s", savedVisibility);
+      div.classList.toggle("hidden", savedVisibility);
     }
     if (this.rotation % 180 === this.parentRotation % 180) {
       this.width = rect.width / parentWidth;
@@ -17661,7 +17661,7 @@ class ColorPicker {
     });
     const swatch = this.#buttonSwatch = document.createElement("span");
     swatch.className = "swatch";
-    swatch.setAttribute("aria-s", true);
+    swatch.setAttribute("aria-hidden", true);
     swatch.style.backgroundColor = this.#defaultColor;
     button.append(swatch);
     return button;
@@ -17777,7 +17777,7 @@ class ColorPicker {
       });
     }
     if (this.#dropdown) {
-      this.#dropdown.classList.remove("s");
+      this.#dropdown.classList.remove("hidden");
       return;
     }
     const root = this.#dropdown = this.#getDropdownRoot();
@@ -17790,12 +17790,12 @@ class ColorPicker {
     this.hideDropdown();
   }
   hideDropdown() {
-    this.#dropdown?.classList.add("s");
+    this.#dropdown?.classList.add("hidden");
     this.#openDropdownAC?.abort();
     this.#openDropdownAC = null;
   }
   get #isDropdownVisible() {
-    return this.#dropdown && !this.#dropdown.classList.contains("s");
+    return this.#dropdown && !this.#dropdown.classList.contains("hidden");
   }
   _hideDropdownFromKeyboard() {
     if (this.#isMainColorPicker) {
@@ -18280,7 +18280,7 @@ class HighlightEditor extends AnnotationEditor {
     }
     const highlightDiv = this.#highlightDiv = document.createElement("div");
     div.append(highlightDiv);
-    highlightDiv.setAttribute("aria-s", "true");
+    highlightDiv.setAttribute("aria-hidden", "true");
     highlightDiv.className = "internal";
     highlightDiv.style.clipPath = this.#clipPathId;
     const [parentWidth, parentHeight] = this.parentDimensions;
@@ -18368,12 +18368,12 @@ class HighlightEditor extends AnnotationEditor {
     if (this.parent) {
       this.parent.drawLayer.updateProperties(this.#id, {
         rootClass: {
-          s: !visible
+          hidden: !visible
         }
       });
       this.parent.drawLayer.updateProperties(this.#outlineId, {
         rootClass: {
-          s: !visible
+          hidden: !visible
         }
       });
     }
@@ -19069,7 +19069,7 @@ class DrawingEditor extends AnnotationEditor {
     div.classList.add("draw");
     const drawDiv = document.createElement("div");
     div.append(drawDiv);
-    drawDiv.setAttribute("aria-s", "true");
+    drawDiv.setAttribute("aria-hidden", "true");
     drawDiv.className = "internal";
     const [parentWidth, parentHeight] = this.parentDimensions;
     this.setDims(this.width * parentWidth, this.height * parentHeight);
@@ -20958,7 +20958,7 @@ class SignatureEditor extends DrawingEditor {
         });
         this.addSignature(outline, heightInPage, description, uuid);
       } else {
-        this.div.s = true;
+        this.div.hidden = true;
         this._uiManager.getSignature(this);
       }
     }
@@ -21075,7 +21075,7 @@ class SignatureEditor extends DrawingEditor {
         hasDescription: !!description
       }
     });
-    this.div.s = false;
+    this.div.hidden = false;
   }
   getFromImage(bitmap) {
     const {
@@ -21227,7 +21227,7 @@ class StampEditor extends AnnotationEditor {
   }
   altTextFinish() {
     if (this._uiManager.useNewAltTextFlow) {
-      this.div.s = false;
+      this.div.hidden = false;
     }
     super.altTextFinish();
   }
@@ -21438,7 +21438,7 @@ class StampEditor extends AnnotationEditor {
       baseY = this.y;
     }
     super.render();
-    this.div.s = true;
+    this.div.hidden = true;
     this.addAltTextButton();
     if (!this.#missingCanvas) {
       if (this.#bitmap) {
@@ -21517,7 +21517,7 @@ class StampEditor extends AnnotationEditor {
     }
     this._initialOptions = null;
     if (!this._uiManager.useNewAltTextWhenAddingImage || !this._uiManager.useNewAltTextFlow || this.annotationElementId) {
-      div.s = false;
+      div.hidden = false;
     }
     this.#drawBitmap();
     if (!this.#hasBeenAddedInUndoStack) {
@@ -21954,7 +21954,7 @@ class AnnotationEditorLayer {
     for (const editorType of AnnotationEditorLayer.#editorTypes.values()) {
       classList.toggle(`${editorType._type}Editing`, mode === editorType._editorType);
     }
-    this.div.s = false;
+    this.div.hidden = false;
   }
   hasTextLayer(textLayer) {
     return textLayer === this.#textLayer?.div;
@@ -22060,7 +22060,7 @@ class AnnotationEditorLayer {
     }
     this.#cleanup();
     if (this.isEmpty) {
-      this.div.s = true;
+      this.div.hidden = true;
     }
     const {
       classList
@@ -22575,7 +22575,7 @@ class DrawLayer {
   #createSVG() {
     const svg = DrawLayer._svgFactory.create(1, 1, true);
     this.#parent.append(svg);
-    svg.setAttribute("aria-s", true);
+    svg.setAttribute("aria-hidden", true);
     return svg;
   }
   #createClipPath(defs, pathId) {
