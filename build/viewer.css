@@ -151,7 +151,7 @@
     --text-primary-color: #15141a;
 
     --message-bar-icon: url(images/secondaryToolbarButton-documentProperties.svg);
-    --message-bar-icon-color: #006eff;
+    --message-bar-icon-color: #0060df;
     --message-bar-bg-color: #deeafc;
     --message-bar-fg-color: var(--text-primary-color);
     --message-bar-border-color: rgb(0 0 0 / 0.08);
@@ -183,7 +183,7 @@
 :where(html.is-dark) #editorUndoBar {
     --text-primary-color: #fbfbfe;
 
-    --message-bar-icon-color: #1861cf;
+    --message-bar-icon-color: #73a7f3;
     --message-bar-bg-color: #003070;
     --message-bar-border-color: rgb(255 255 255 / 0.08);
 
@@ -270,7 +270,7 @@
     --link-hover-fg-color: #0250bb;
     --separator-color: #f0f0f4;
 
-    --textarea-border-color: #9d8f9b;
+    --textarea-border-color: #8f8f9d;
     --textarea-bg-color: white;
     --textarea-fg-color: var(--text-secondary-color);
 
@@ -777,20 +777,19 @@
     border-radius: 0;
 }
 
-.selected:is(.textLayer .highlight) { /*COR DA PESQUISA*/
-    background-color: #ffef0abe;
-    border: #000000 3px solid;
+.selected:is(.textLayer .highlight) {
+    background-color: var(--highlight-selected-bg-color);
     -webkit-backdrop-filter: var(--highlight-selected-backdrop-filter);
     backdrop-filter: var(--highlight-selected-backdrop-filter);
 }
 
 .textLayer ::-moz-selection {
-    background: rgba(255, 0, 157, 0.493);
+    background: rgba(0 0 255 / 0.25);
     background: color-mix(in srgb, AccentColor, transparent 75%);
 }
 
 .textLayer ::selection {
-    background: rgba(255, 238, 0, 0.548);
+    background: rgba(0 0 255 / 0.25);
     background: color-mix(in srgb, AccentColor, transparent 75%);
 }
 
@@ -4336,20 +4335,20 @@
     --doorhanger-icon-opacity: 0.9;
     --doorhanger-height: 8px;
 
-    --main-color: rgb(251, 255, 16);
-    --body-bg-color: rgb(228, 224, 224);
-    --progressBar-color: rgb(229, 255, 0);
+    --main-color: rgb(12 12 13);
+    --body-bg-color: rgb(212 212 215);
+    --progressBar-color: rgb(10 132 255);
     --progressBar-bg-color: rgb(221 221 222);
-    --progressBar-blend-color: rgb(0, 0, 0);
+    --progressBar-blend-color: rgb(116 177 239);
     --scrollbar-color: auto;
     --scrollbar-bg-color: auto;
-    --toolbar-icon-bg-color: rgb(255, 255, 255);
+    --toolbar-icon-bg-color: rgb(0 0 0);
     --toolbar-icon-hover-bg-color: rgb(0 0 0);
 
     --sidebar-narrow-bg-color: rgb(212 212 215 / 0.9);
     --sidebar-toolbar-bg-color: rgb(245 246 247);
-    --toolbar-bg-color: rgba(37, 37, 37, 0.705);
-    --toolbar-border-color: rgb(238, 255, 0);
+    --toolbar-bg-color: rgb(249 249 250);
+    --toolbar-border-color: rgb(184 184 184);
     --toolbar-box-shadow: 0 1px 0 var(--toolbar-border-color);
     --toolbar-border-bottom: none;
     --toolbarSidebar-box-shadow: inset calc(-1px * var(--dir-factor)) 0 0 rgb(0 0 0 / 0.25), 0 1px 0 rgb(0 0 0 / 0.15), 0 0 1px rgb(0 0 0 / 0.1);
@@ -4359,12 +4358,12 @@
     --toggled-btn-bg-color: rgb(0 0 0 / 0.3);
     --toggled-hover-active-btn-color: rgb(0 0 0 / 0.4);
     --toggled-hover-btn-outline: none;
-    --dropdown-btn-bg-color: rgb(37, 37, 37);
+    --dropdown-btn-bg-color: rgb(215 215 219);
     --dropdown-btn-border: none;
-    --separator-color: rgba(255, 238, 0, 0.733);
-    --field-color: rgb(247, 222, 0);
-    --field-bg-color: rgb(37, 37, 37);
-    --field-border-color: rgb(247, 210, 0);
+    --separator-color: rgb(0 0 0 / 0.3);
+    --field-color: rgb(6 6 6);
+    --field-bg-color: rgb(255 255 255);
+    --field-border-color: rgb(187 187 188);
     --treeitem-color: rgb(0 0 0 / 0.8);
     --treeitem-bg-color: rgb(0 0 0 / 0.15);
     --treeitem-hover-color: rgb(0 0 0 / 0.9);
@@ -4372,10 +4371,10 @@
     --treeitem-selected-bg-color: rgb(0 0 0 / 0.25);
     --thumbnail-hover-color: rgb(0 0 0 / 0.1);
     --thumbnail-selected-color: rgb(0 0 0 / 0.2);
-    --doorhanger-bg-color: rgb(112, 112, 112);
-    --doorhanger-border-color: rgb(255, 238, 0);
+    --doorhanger-bg-color: rgb(255 255 255);
+    --doorhanger-border-color: rgb(12 12 13 / 0.2);
     --doorhanger-hover-color: rgb(12 12 13);
-    --doorhanger-separator-color: rgb(255, 251, 0);
+    --doorhanger-separator-color: rgb(222 222 222);
     --dialog-button-border: none;
     --dialog-button-bg-color: rgb(12 12 13 / 0.1);
     --dialog-button-hover-bg-color: rgb(12 12 13 / 0.3);
@@ -5953,7 +5952,7 @@ dialog :link {
     position: relative;
     box-sizing: border-box;
     font: message-box;
-    background-color: rgb(101, 102, 102);
+    background-color: lightskyblue;
     box-shadow: var(--toolbar-box-shadow);
     border-bottom: var(--toolbar-border-bottom);
 }
