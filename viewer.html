@@ -5,15 +5,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <meta name="google" content="notranslate">
+    <base href="https://bizoonydb.github.io/sumatrapdfdb/">
     <title>PDF.js viewer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 
     
-    <link rel="resource" type="application/l10n" href="locale/locale.json">
-    <script src="./build/pdf.mjs" type="module"></script>
+    <link rel="resource" type="application/l10n" href="https://bizoonydb.github.io/sumatrapdfdb/locale/locale.json">
+    <script src="https://bizoonydb.github.io/sumatrapdfdb/build/pdf.mjs" type="module"></script>
 
-    <link rel="stylesheet" href="./build/viewer.css">
+    <link rel="stylesheet" href="https://bizoonydb.github.io/sumatrapdfdb/build/viewer.css">
     <style>
         #openLocalPdfButton::before {
             --toolbarButton-openFile-icon: url("./build/images/toolbarButton-openFile.svg");
@@ -274,7 +275,7 @@
         }
     </style>
 
-    <script src="./viewer.mjs" type="module"></script>
+    <script src="https://bizoonydb.github.io/sumatrapdfdb/viewer.mjs" type="module"></script>
 </head>
 
 <body tabindex="0">
@@ -1248,101 +1249,7 @@
     });
 </script>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const openLocalPdfButton = document.getElementById("openLocalPdfButton");
 
-  function base64ToUint8Array(base64) {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-
-    return bytes;
-  }
-
-  openLocalPdfButton?.addEventListener("click", async function () {
-    if (window.electron?.openLocalPdf && window.PDFViewerApplication?.open) {
-      try {
-        const file = await window.electron.openLocalPdf();
-        if (!file) return;
-
-        await window.PDFViewerApplication.open({
-          data: base64ToUint8Array(file.data),
-          originalUrl: file.name
-        });
-        return;
-      } catch (error) {
-        console.error("Erro ao abrir PDF local:", error);
-        alert("Nao foi possivel abrir o PDF local.");
-      }
-    }
-
-    const fileInput = document.getElementById("fileInput");
-
-    if (fileInput) {
-      fileInput.accept = "application/pdf,.pdf";
-      fileInput.click();
-      return;
-    }
-
-    if (window.PDFViewerApplication?._openFileInput) {
-      window.PDFViewerApplication._openFileInput.accept = "application/pdf,.pdf";
-      window.PDFViewerApplication._openFileInput.click();
-    }
-  });
-
-  // Espera o PDF carregar
-  const urlParams = new URLSearchParams(window.location.search);
-  const fileUrl = urlParams.get("file");
-
-  if (!fileUrl) return; // se não houver ?file=, não cria o botão
-
-  // --- Cria o botão ---
-  const downloadBtn = document.createElement("button");
-  downloadBtn.textContent = "⬇️ Baixar PDF";
-  downloadBtn.style.position = "fixed";
-  downloadBtn.style.top = "70px";
-  downloadBtn.style.right = "20px";
-  downloadBtn.style.zIndex = "9999";
-  downloadBtn.style.background = "#0078D7";
-  downloadBtn.style.color = "#fff";
-  downloadBtn.style.border = "none";
-  downloadBtn.style.padding = "10px 16px";
-  downloadBtn.style.borderRadius = "8px";
-  downloadBtn.style.fontSize = "14px";
-  downloadBtn.style.cursor = "pointer";
-  downloadBtn.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
-  downloadBtn.style.transition = "background 0.2s";
-
-  downloadBtn.onmouseenter = () => (downloadBtn.style.background = "#005a9e");
-  downloadBtn.onmouseleave = () => (downloadBtn.style.background = "#0078D7");
-
-  // --- Função de download ---
-  downloadBtn.addEventListener("click", async () => {
-    try {
-      const response = await fetch(fileUrl);
-      if (!response.ok) throw new Error("Erro ao baixar PDF");
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileUrl.split("/").pop().split("?")[0]; // nome do arquivo
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      alert("Falha ao baixar o PDF: " + err.message);
-    }
-  });
-
-  document.body.appendChild(downloadBtn);
-});
-</script>
 
 
 <script>
